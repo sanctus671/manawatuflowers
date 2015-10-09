@@ -25,7 +25,7 @@ app.config(function($stateProvider, $urlRouterProvider, $locationProvider, $http
     .state('portal.home', {
       url: "/home",
       templateUrl: "app/partials/portal/home.html",
-      controller: "MainController",
+      controller: "HomeController",
       authenticate:true      
     })  
     .state('portal.stock', {
@@ -55,7 +55,7 @@ app.config(function($stateProvider, $urlRouterProvider, $locationProvider, $http
     .state('portal.account', {
       url: "/account",
       templateUrl: "app/partials/portal/account.html",
-      controller: "MainController",
+      controller: "AccountController",
       authenticate:true      
     })      
     .state('login', {

@@ -48,13 +48,14 @@
             <thead md-order="query.order" md-trigger="onOrderChange">
               <tr>
                 <th order-by="id" name="ID"></th>
-                <th order-by="name" name="Name"></th>
+                <th order-by="name" name="Code"></th>
                 <th order-by="state" name="Status"></th>
-                <th order-by="product_id" name="Breed"></th>
+                <th order-by="order_line" name="Products"></th>
                 <th order-by="amount_total" name="Total"></th>
                 <th order-by="create_date" name="Date Created"></th>
                 <th order-by="date_order" name="Order Date"></th>
-                <th order-by="user_id" name="User ID"></th>
+                <th order-by="partner_id" name="User"></th>
+                <th order-by="note" name="Notes"></th>
               </tr>
             </thead>
             <tbody>
@@ -66,11 +67,12 @@
                     <md-option ng-value="type" ng-repeat="type in getStatusTypes()">{{type}}</md-option>
                   </md-select>
                 </td>
-                <td>{{getProduct(order)}}</td>
+                <td class="clickable" ng-click="viewProducts($event,order)">{{order.order_line.length}} items</td>
                 <td>{{order.amount_total | no_false}}</td>
                 <td>{{convertDate(order.create_date) | date:'medium'}}</td>
                 <td>{{convertDate(order.date_order) | date:'medium'}}</td>
-                <td>{{order.create_uid[0]}} ({{order.create_uid[1]}})</td>
+                <td>{{order.partner_id[1]}}</td>
+                <td>{{order.note | no_false}}</td>
               </tr>
             </tbody>
           </table>

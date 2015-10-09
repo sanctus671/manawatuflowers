@@ -56,7 +56,7 @@
                 <th order-by="create_date" name="Date Created"></th>
                 <th order-by="date_expected" name="Stock Date"></th>
                 <th order-by="x_img_url" name="Image"></th>
-                <th order-by="user_id" name="User ID"></th>
+                <th order-by="partner_id" name="User"></th>
                 <th order-by="x_notes" name="Notes"></th>
               </tr>
             </thead>
@@ -75,7 +75,7 @@
                 <td>{{convertDate(stockItem.create_date) | date:'medium'}}</td>
                 <td>{{convertDate(stockItem.date_expected) | date:'medium'}}</td>
                 <td><img class="stock-thumbnail" ng-if="stockItem.x_img_url" ng-src="{{stockItem.x_img_url | no_false}}" ></td>
-                <td>{{stockItem.create_uid[0]}} ({{stockItem.create_uid[1]}})</td>
+                <td>{{stockItem.partner_id[1]}}</td>
                 <td>{{stockItem.x_notes | no_false}}</td>
               </tr>
             </tbody>

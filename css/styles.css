@@ -95,24 +95,57 @@ md-progress-circular.login-load{
 }
 
 /*HOME PAGE*********************************************************************/
-.gridListdemoBasicUsage md-grid-list {
+.homeGrid md-grid-list {
   margin: 8px; }
-.gridListdemoBasicUsage .gray {
+.homeGrid .gray {
   background: #f5f5f5; }
-.gridListdemoBasicUsage .green {
+.homeGrid .green {
   background: #b9f6ca; }
-.gridListdemoBasicUsage .yellow {
+.homeGrid .yellow {
   background: #ffff8d; }
-.gridListdemoBasicUsage .blue {
+.homeGrid .blue {
   background: #84ffff; }
-.gridListdemoBasicUsage .purple {
+.homeGrid .purple {
   background: #b388ff; }
-.gridListdemoBasicUsage .red {
+.homeGrid .red {
   background: #ff8a80; }
-.gridListdemoBasicUsage md-grid-tile {
+.homeGrid md-grid-tile {
   transition: all 400ms ease-out 50ms; }
 
+md-list.latest-items{
+position: absolute;
+    left: 5px;
+    top: 0px;
+    width:100%;
+}
+@media screen and (min-width: 959px){
+    md-grid-tile.force-top{
+        margin-top:0px!important;
+    }
+}
 
+md-grid-list figure{
+        overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+md-grid-tile.products {
+    text-align:center;
+}
+
+md-grid-list md-grid-tile md-grid-tile-footer{
+    background: rgba(0,0,0,.5);
+}
+
+md-grid-list img{
+    max-width:128px;
+    max-height: 128px;    
+}
+
+md-grid-list h1{
+    padding-top: 0px;
+    margin-top: 0px;
+}
 
 /*STOCK PAGE********************************************************************/
 
@@ -176,3 +209,26 @@ md-input-container.md-icon-float.autocomplete-container{
   background: #666;
   color: #fff;
 }
+
+
+
+/*ORDER PAGE STYLES ************************************************************/
+
+.add-order md-input-container.md-icon-float.autocomplete-container, .edit-order md-input-container.md-icon-float.autocomplete-container{
+    margin-top:20px;
+}
+
+.add-order md-datepicker .md-datepicker-input-container, .edit-order md-datepicker .md-datepicker-input-container{
+    width:80%;
+}
+
+.add-order md-datepicker .md-datepicker-input-container input, .edit-order md-datepicker .md-datepicker-input-container input{
+    width:100%;
+    max-width: 100%;
+    color: rgba(0,0,0,0.87);
+}
+
+.add-order md-datepicker, .edit-order md-datepicker{
+    margin-bottom:30px;
+}
+
