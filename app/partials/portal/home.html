@@ -1,7 +1,7 @@
 <div class="homeGrid">
     <md-grid-list md-cols-sm="1" md-cols-md="2" md-cols-gt-md="6" md-row-height-gt-md="1:1" md-row-height="2:2" md-gutter="12px" md-gutter-gt-sm="8px">
 
-        <md-grid-tile class="gray" md-rowspan="3" md-colspan="2" md-colspan-sm="1">
+        <md-grid-tile class="gray" md-rowspan="3" md-colspan="2" md-colspan-sm="1" style="padding-bottom:0px!important">
             <md-list class="latest-items" ng-repeat="item in latest" style="top:{{$index*72}}px">
                 <a href ui-sref="portal.{{itemType | lowercase}}">
                     <md-list-item class="md-2-line">

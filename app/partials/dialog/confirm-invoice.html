@@ -1,0 +1,23 @@
+<md-dialog aria-label="Send Invoice">
+  <form>
+  <md-toolbar>
+    <div class="md-toolbar-tools">
+      <h2>Send Invoice</h2>
+      <span flex></span>
+
+    </div>
+  </md-toolbar>
+  <md-dialog-content style="max-width:800px;max-height:810px; ">
+    Are you sure you want to send the invoice?
+  </md-dialog-content>
+  <div class="md-actions" layout="row">
+    <span flex></span>
+    <md-button ng-click="confirm()" >
+     Yes
+    </md-button>
+    <md-button ng-click="cancel()" style="margin-right:20px;" >
+      No
+    </md-button>
+  </div>
+  </form>
+</md-dialog>

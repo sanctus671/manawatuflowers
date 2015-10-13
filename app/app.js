@@ -111,3 +111,12 @@ app.filter('no_false', function() {
         return '';
     }
 });
+
+app.filter('false_zero', function() {
+    return function(text, length, end) {
+        if (text) {
+            return text;
+        }
+        return 0;
+    }
+});

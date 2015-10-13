@@ -1,0 +1,48 @@
+<md-dialog aria-label="Edit Product">
+  <form>
+  <md-toolbar>
+    <div class="md-toolbar-tools">
+      
+        <h2>Edit Product</h2>
+        <md-progress-circular class="md-accent" md-mode="{{uploading}}" md-diameter="20px"></md-progress-circular>
+      
+      <span flex></span>
+      <md-button class="md-icon-button" ng-click="cancel()">
+        <md-icon md-svg-src="css/icons/ic_close_white_24px.svg" aria-label="Close dialog"></md-icon>
+      </md-button>
+    </div>
+  </md-toolbar>
+  <md-dialog-content style="max-width:800px;max-height:810px; ">
+    <form name="userForm">
+        <md-input-container>
+            <label>Name</label>
+            <input type="text" ng-model="product.name">
+          </md-input-container>     
+        <md-input-container>
+            <label>Price</label>
+            <input type="number" ng-model="product.list_price">
+          </md-input-container>          
+        <div layout layout-sm="column">
+          <md-input-container flex style="width:70%">
+            <label>Image</label>
+            <input type="text" ng-model="product.image_medium" disabled="true">
+          </md-input-container>
+          <md-input-container>
+              <input id="uploadImage" type="file" ngf-select="uploadFiles($file)" accept="image/*" ngf-max-size="1MB" style="display:none;">
+              <md-button class="md-primary" onclick="document.getElementById('uploadImage').click()" ng-disabled="uploading"><span ng-show="!uploading">Upload</span><span ng-show="uploading">Uploading</span></md-button>
+          </md-input-container>
+            <p class="error">{{errorMsg}}</p>
+        </div>
+    </form>
+  </md-dialog-content>
+  <div class="md-actions" layout="row">
+    <span flex></span>
+    <md-button ng-click="cancel()" >
+        Cancel
+    </md-button>
+    <md-button class="md-primary" ng-click="update()" style="margin-right:20px;" >
+        Update
+    </md-button>
+  </div>
+  </form>
+</md-dialog>

@@ -7,6 +7,13 @@
             Filter products
         </md-tooltip>          
     </md-button>
+    <md-button class="md-fab md-mini" ng-click="addItem($event)" ng-disabled="">
+        <md-icon md-svg-icon="css/icons/ic_add_white_24px.svg"></md-icon>
+        <md-tooltip>
+            Add new product
+        </md-tooltip>          
+    </md-button>  
+  
 </md-data-table-toolbar>
 
 <md-data-table-toolbar ng-show="filter.show && !selected.length">
@@ -22,7 +29,21 @@
 
         <md-data-table-toolbar class="alternate" ng-show="selected.length">
             <div>{{selected.length}} {{selected.length > 1 ? 'items' : 'item'}} selected</div>
-            <div flex=""></div>         
+            <div flex=""></div>  
+            <md-button class="" ng-click="editItem($event)" ng-show="true" ng-disabled="products.length < 1">
+                <md-icon md-svg-icon="css/icons/ic_mode_edit_black_24px.svg"></md-icon> Edit
+                <md-tooltip>
+                    Edit selected orders
+                </md-tooltip>                  
+            </md-button>             
+            <md-button class="" ng-click="removeItem($event)">
+                <md-icon md-svg-icon="css/icons/ic_delete_black_24px.svg"></md-icon> Remove
+                <md-tooltip>
+                    Remove selected orders
+                </md-tooltip>                 
+            </md-button>                
+            
+            
         </md-data-table-toolbar>
 
         <md-data-table-container>
@@ -32,6 +53,7 @@
                 <th order-by="id" name="ID"></th>
                 <th order-by="name" name="Name"></th>
                 <th order-by="image_small" name="Image"></th>
+                <th order-by="list_price" name="Price"></th>
                 <th order-by="qty_available" name="Quantity Available"></th>
                 <th order-by="incoming_qty" name="Quantity Forecasted"></th>
                 <th order-by="outgoing_qty" name="Quantity Outgoing"></th>
@@ -44,10 +66,11 @@
                 <td>{{product.id | no_false}}</td>
                 <td>{{product.name | no_false}}</td>
                 <td><img class="stock-thumbnail" ng-if="product.image_small" ng-src="data:image/jpg;base64,{{product.image_small | no_false}}"></td>
-                <td>{{product.qty_available | no_false}}</td>
-                <td>{{product.incoming_qty | no_false}}</td>
-                <td>{{product.outgoing_qty | no_false}}</td>
-                <td>{{product.virtual_available | no_false}}</td>
+                <td>{{product.list_price | currency}}</td>
+                <td>{{product.qty_available | false_zero}}</td>
+                <td>{{product.incoming_qty | false_zero}}</td>
+                <td>{{product.outgoing_qty | false_zero}}</td>
+                <td>{{product.virtual_available | false_zero}}</td>
               </tr>
             </tbody>
           </table>

@@ -226,6 +226,49 @@ app.service('OdooService', function ($http, $q, WEB_API_URL, localStorageService
         return deferred.promise;          
     }
     
+    this.createInvoice = function(order){
+        //create invoice -> get id -> change status of order ->validate invoice
+        console.log(order);
+        var deferred = $q.defer(),
+        OdooService = this,
+        user = localStorageService.get('user'),
+        lineItems = [],
+        orderId = order.id;
+        OdooService.getData("sale.order.line", order.order_line,["sequence","delay","state","th_weight","product_packaging","product_id","name","product_uom_qty","product_uom","product_uos_qty","product_uos","route_id","price_unit","tax_id","discount","price_subtotal"]).then(function(data){
+            console.log(data);
+            lineItems = data;
+            var invoiceLineItems = [];
+            for (var index in lineItems){
+                var line = lineItems[index];
+                invoiceLineItems.push({"advance_payment_method":"all","qtty":line.product_uom_qty,"product_id":line.product_id[0],"amount":line.price_subtotal});            
+            }
+            var invoiceLineItems = [{"advance_payment_method":"all","qtty":1,"product_id":56,"amount":150}];
+            console.log(invoiceLineItems);
+            $http.post(WEB_API_URL, {createinvoice:true,model:"sale.advance.payment.inv", args:invoiceLineItems, kwargs:{context:{params:{action:380},active_id:orderId, active_ids:[orderId]}}, sessionid:user.user.session_id}).then(function(data){
+                console.log(data)
+                if (data.data.data.error){deferred.reject(data);}
+                var invoiceId = data.data.data.result;
+                $http.post(WEB_API_URL, {assigninvoice:true,model:"sale.advance.payment.inv", args:[[invoiceId],{"params":{"action":380},"active_model":"sale.order","active_id":orderId,"active_ids":[orderId]}],  sessionid:user.user.session_id}).then(function(data){
+                    if (data.data.data.error){deferred.reject(data);}
+                    console.log(data);
+                    $http.post(WEB_API_URL, {sendinvoice:true,id:invoiceId, order:order,kwargs:{context:{params:{action:380},active_id:orderId, active_ids:[orderId]}},  sessionid:user.user.session_id}).then(function(data){
+                        console.log(data);
+                        deferred.resolve(data);
+                    });
+                    
+                },function(data){deferred.reject(data);});
+                
+                
+                
+            },function(data){deferred.reject(data);})
+            
+            
+            
+        },function(data){deferred.reject(data);});        
+
+        return deferred.promise;                 
+    }
+    
     function checkData(data){
         if (data.data.result){
             return true;

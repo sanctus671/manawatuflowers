@@ -29,6 +29,12 @@
         <md-data-table-toolbar class="alternate" ng-show="selected.length">
             <div>{{selected.length}} {{selected.length > 1 ? 'items' : 'item'}} selected</div>
             <div flex=""></div>
+            <md-button class="" ng-click="sendInvoice(selected[0])" ng-if="selected.length > 0 && selected.length < 2 && (selected[0].state === 'manual') && selected[0].invoice_ids.length < 1" ng-disabled="products.length < 1">
+                <md-icon md-svg-icon="css/icons/ic_attachment_black_24px.svg"></md-icon> Invoice
+                <md-tooltip>
+                    Send invoice to customer
+                </md-tooltip>                  
+            </md-button>              
             <md-button class="" ng-click="editItem($event)" ng-show="true" ng-disabled="products.length < 1">
                 <md-icon md-svg-icon="css/icons/ic_mode_edit_black_24px.svg"></md-icon> Edit
                 <md-tooltip>
@@ -64,11 +70,11 @@
                 <td>{{order.name}}</td>
                 <td>
                   <md-select ng-model="order.state" placeholder="Other" md-on-close="changeStatus(order)">
-                    <md-option ng-value="type" ng-repeat="type in getStatusTypes()">{{type}}</md-option>
+                    <md-option ng-value="type" ng-repeat="type in getStatusTypes()" ng-disabled="type === 'progress' || type==='draft' || type==='sent'">{{type}}</md-option>
                   </md-select>
                 </td>
                 <td class="clickable" ng-click="viewProducts($event,order)">{{order.order_line.length}} items</td>
-                <td>{{order.amount_total | no_false}}</td>
+                <td>{{order.amount_total | currency}}</td>
                 <td>{{convertDate(order.create_date) | date:'medium'}}</td>
                 <td>{{convertDate(order.date_order) | date:'medium'}}</td>
                 <td>{{order.partner_id[1]}}</td>

@@ -199,7 +199,7 @@ app.controller('StockController', function($scope, $rootScope, $q, $timeout, $md
         $scope.selected = [];
         $scope.query = {
           order: '-id',
-          limit: 5,
+          limit: 10,
           offset:0,
           page: 1,
           search:''
@@ -421,7 +421,7 @@ app.controller('ProductsController', function($scope, $rootScope, $q, $timeout, 
         $scope.selected = [];
         $scope.query = {
           order: '-id',
-          limit: 5,
+          limit: 10,
           offset:0,
           page: 1,
           search:''
@@ -462,7 +462,124 @@ app.controller('ProductsController', function($scope, $rootScope, $q, $timeout, 
     return deferred.promise;
   };  
   
+  $scope.addItem = function(event){
+    $mdDialog.show({
+          controller: ProductDialogController,
+          templateUrl: 'app/partials/dialog/add-product.html',
+          parent: angular.element(document.body),
+          targetEvent: event,
+          clickOutsideToClose:true,
+          locals:{selected:$scope.selected}
+        }).then(function(newProduct){
+            OdooService.addData('product.template',newProduct.create).then(function(){
+                $scope.$parent.showToast('New item added!');               
+                OdooService.getAllData('product.template', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){$scope.products = response;})
+            },function(){
+                $scope.$parent.showToast('Failed to add item');       
+            });
+        });
+  };
+
+    $scope.editItem = function(event){
+      $mdDialog.show({
+            controller: ProductDialogController,
+            templateUrl: 'app/partials/dialog/edit-product.html',
+            parent: angular.element(document.body),
+            targetEvent: event,
+            clickOutsideToClose:true,
+            locals:{selected:$scope.selected}
+          }).then(function(stock){
+            OdooService.updateData('product.template',stock.update.ids, stock.update.data, {context: {lang: "en_US", tz: "Pacific/Auckland", uid: 1, params: {action: 352}}}).then(function(){
+                $scope.$parent.showToast('Items updated!');              
+                OdooService.getAllData('product.template', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){$scope.products = response;})
+            },function(){
+                $scope.$parent.showToast('Failed to update items');
+            });
+        });
+    }; 
+    
+    $scope.removeItem = function(event){
+      $mdDialog.show({
+            controller: ProductDialogController,
+            templateUrl: 'app/partials/dialog/remove-product.html',
+            parent: angular.element(document.body),
+            targetEvent: event,
+            clickOutsideToClose:true,
+            locals:{selected:$scope.selected, products:$scope.products}
+          }).then(function(removeProduct){
+                OdooService.removeData('product.template',removeProduct.remove).then(function(){
+                    $scope.$parent.showToast('Items removed!');        
+                OdooService.getAllData('product.template', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){$scope.products = response;});
+                },function(){
+                    $scope.$parent.showToast('Failed to remove items');
+                });
+            });
+    };   
+  
+  
+  
+  
+  
+  
+  
 });
+
+function ProductDialogController($scope, $mdDialog, $timeout, Upload, WEB_API_URL, selected, OdooService) {
+    $scope.newProduct = {};
+    $scope.product = selected.length > 0 ? angular.copy(selected[0]) : {};
+    $scope.cancel = function() {
+      $mdDialog.cancel();
+    };
+    $scope.create = function() {
+      $mdDialog.hide({create:$scope.convertForOdoo($scope.newProduct)});
+    };
+    $scope.confirm = function() {
+        var ids = [];
+        for (var index in selected){ids.push(selected[index].id);}
+        $mdDialog.hide({remove:ids});
+    };    
+    $scope.update = function() {
+        var ids = [];
+        for (var index in selected){ids.push(selected[index].id);}      
+        console.log(ids);
+        $mdDialog.hide({update:{ids:ids,data:$scope.convertForOdoo($scope.product)}});
+    };    
+    $scope.uploadFiles = function(file) {
+        if (file && !file.$error) {
+            $scope.uploading = "indeterminate";
+            var reader = new FileReader();
+            reader.onload = function(frEvent) {
+                var dataURL = frEvent.target.result;
+                var data = dataURL.split(",").pop();
+                $scope.newProduct.image_medium = data;
+                $scope.product.image_medium = data;
+                $scope.uploading = "";
+            }
+            reader.readAsDataURL(file);            
+
+        }   
+    } //cr, uid, id, field, value, arg
+    $scope.convertForOdoo = function(object){
+        return {
+            name:object.name,
+            image_medium:object.image_medium,
+            list_price: object.list_price,
+            uom_id:1,
+            purchase_ok: true,
+            sale_ok: true,
+            location_id:2,
+            location_dest_id:12,
+            product_uom:1,
+            type:"product"
+
+        }
+    };
+
+}
+
+
+
+
 
 
 
@@ -471,7 +588,7 @@ app.controller('OrdersController', function($scope, $rootScope, $q, $timeout, $m
         $scope.selected = [];
         $scope.query = {
           order: '-id',
-          limit: 5,
+          limit: 10,
           offset:0,
           page: 1,
           search:''
@@ -521,10 +638,34 @@ app.controller('OrdersController', function($scope, $rootScope, $q, $timeout, $m
   };
   
   $scope.changeStatus = function(order){
-        var map = {draft:"draft", cancel: "cancel", progress:"progress", manual:"manual", sent:"sent", done:"done"};
+        var map = {draft:"draft", cancel: "cancel", progress:"progress", manual:"button_confirm", sent:"sent", done:"done"};
         console.log(map[order.state]);
-        OdooService.changeState('sale.order', map[order.state], [order.id]);
+        if (order.state === "progress"){
+            OdooService.createInvoice(order);
+        }
+        else{
+            OdooService.changeState('sale.order', map[order.state], [order.id]);
+        }
   }  
+  
+  $scope.sendInvoice = function(order){
+      $mdDialog.show({
+            controller: OrderDialogController,
+            templateUrl: 'app/partials/dialog/confirm-invoice.html',
+            parent: angular.element(document.body),
+            targetEvent: event,
+            clickOutsideToClose:true,
+            locals:{selected:$scope.selected, products:$scope.products}
+          }).then(function(){
+                OdooService.createInvoice(order).then(function(){
+                    $scope.$parent.showToast('Invoice sent!'); 
+                    order.state = "progress";
+                }, function(){$scope.$parent.showToast('Failed to send invoice');} );       
+            }
+          ,function(){
+                    $scope.$parent.showToast('Failed to remove items');
+                });
+  }
   
     $scope.getProduct = function(order){
         if ($scope.orders.length < 1){return;}
@@ -674,6 +815,9 @@ function OrderDialogController($scope, $mdDialog, $timeout, Upload, WEB_API_URL,
         for (var index in selected){ids.push(selected[index].id);}
         $mdDialog.hide({remove:ids});
     };    
+    $scope.confirmInvoice = function() {
+        $mdDialog.hide();
+    };       
     $scope.update = function() {
         for (var index in $scope.order.lineItems){if (!$scope.order.lineItems[index].name || !$scope.order.lineItems[index].product_uom_qty){return;}}
         var ids = [];
