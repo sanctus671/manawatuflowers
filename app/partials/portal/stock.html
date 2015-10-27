@@ -29,7 +29,7 @@
         <md-data-table-toolbar class="alternate" ng-show="selected.length">
             <div>{{selected.length}} {{selected.length > 1 ? 'items' : 'item'}} selected</div>
             <div flex=""></div>
-            <md-button class="" ng-click="editItem($event)" ng-show="true" ng-disabled="products.length < 1">
+            <md-button class="" ng-click="editItem($event)" ng-show="true" ng-disabled="products.length < 1 || invalidStatus(selected)">
                 <md-icon md-svg-icon="css/icons/ic_mode_edit_black_24px.svg"></md-icon> Edit
                 <md-tooltip>
                     Edit selected stock
@@ -51,12 +51,13 @@
                 <th order-by="name" name="Name"></th>
                 <th order-by="state" name="Status"></th>
                 <th order-by="product_id" name="Breed"></th>
+                <th order-by="x_held_by" name="Held By"></th>
                 <th order-by="x_quality" name="Quality"></th>
                 <th order-by="product_qty" name="Quantity"></th>
                 <th order-by="create_date" name="Date Created"></th>
                 <th order-by="date_expected" name="Stock Date"></th>
                 <th order-by="x_img_url" name="Image"></th>
-                <th order-by="partner_id" name="User"></th>
+                <th order-by="partner_id" name="Grower"></th>
                 <th order-by="x_notes" name="Notes"></th>
               </tr>
             </thead>
@@ -65,17 +66,18 @@
                 <td>{{stockItem.id}}</td>
                 <td>{{stockItem.name}}</td>
                 <td>
-                  <md-select ng-model="stockItem.state" placeholder="Other" md-on-close="changeStatus(stockItem)">
-                    <md-option ng-value="type" ng-repeat="type in getStatusTypes()">{{type}}</md-option>
+                  <md-select class="statusSelect" ng-model="stockItem.state" placeholder="Other" ng-change="changeStatus(stockItem, '{{stockItem.state}}')">
+                      <md-option ng-value="status" ng-repeat="(status, statusTrans) in statusMap" ng-disabled="status === 'draft'  || status==='assigned' || stockItem.state === 'cancel' || (stockItem.state === 'done' && status !== 'cancel') || isDestroyed(stockItem)"><span ng-if='isDestroyed(stockItem)'>Destroyed</span><span ng-if='!isDestroyed(stockItem)'>{{statusTrans}}</span></md-option>
                   </md-select>
                 </td>
                 <td>{{getProduct(stockItem)}}</td>
+                <td>{{stockItem.x_held_by | no_false}}</td>
                 <td>{{stockItem.x_quality | no_false}}</td>
-                <td>{{stockItem.product_qty | no_false}}</td>
+                <td><span ng-if="stockItem.location_dest_id[1] === 'Partner Locations/Customers'">-</span>{{stockItem.product_qty | no_false}}</td>
                 <td>{{convertDate(stockItem.create_date) | date:'medium'}}</td>
                 <td>{{convertDate(stockItem.date_expected) | date:'medium'}}</td>
                 <td><img class="stock-thumbnail" ng-if="stockItem.x_img_url" ng-src="{{stockItem.x_img_url | no_false}}" ></td>
-                <td>{{stockItem.partner_id[1]}}</td>
+                <td><span ng-if="stockItem.location_dest_id[1] === 'Partner Locations/Customers'">ORDER: </span>{{stockItem.partner_id[1]}}</td>
                 <td>{{stockItem.x_notes | no_false}}</td>
               </tr>
             </tbody>

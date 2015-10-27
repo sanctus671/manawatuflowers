@@ -1,6 +1,13 @@
 app.service('MainService', function ($http, $q, localStorageService, WEB_API_URL) {
+   
+    
+
 
 });
+
+
+
+
 
 app.service('OdooService', function ($http, $q, WEB_API_URL, localStorageService) {
     this.login = function(username, password){

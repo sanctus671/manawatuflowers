@@ -6,7 +6,7 @@
 <md-content flex="100" flex-gt-md="40" flex-gt-lg="25" layout-align="center center" layout-padding>
         <form name="accountForm">
             <md-input-container class="md-icon-float" >
-                <label>Username</label>
+                <label>Username/Business Name</label>
                 <md-icon md-svg-icon="css/icons/ic_person_black_24px.svg"></md-icon>
                 <input md-maxlength="30" minlength="6" name="username" required ng-model="user.username" type="text" disabled>
                 <div ng-messages="registerForm.username.$error">
@@ -51,12 +51,7 @@
                 <md-icon md-svg-icon="css/icons/ic_email_black_24px.svg"></md-icon>
                 <input ng-model="partner.email" type="text">
             </md-input-container>   
-
-            <md-input-container class="md-icon-float" >
-                <label>Business</label>
-                <md-icon md-svg-icon="css/icons/ic_business_black_24px.svg"></md-icon>
-                <input ng-model="partner.business" type="text">
-            </md-input-container>    
+  
             <md-button class="md-raised md-accent" ng-click="updateUser()">Update</md-button>
             
         </form>

@@ -1,5 +1,7 @@
 app.controller('MainController', function ($scope, $timeout, $rootScope, $state,$mdUtil, $mdSidenav, OdooService, $mdToast) {
-    var init = function init() {     
+    var init = function init() {  
+        $scope.alerts = [];
+        $scope.productsMap = {};
     };	
     $scope.toggleNav = $mdUtil.debounce(function(){$mdSidenav("left").toggle()},200);
     $scope.logout = function(){
@@ -15,7 +17,10 @@ app.controller('MainController', function ($scope, $timeout, $rootScope, $state,
             .hideDelay(3000)
         );        
     }
-
+        
+    
+    
+    //setTimeout(function(){$scope.getAlerts();},5000);
     
     
     init(); 
@@ -204,15 +209,22 @@ app.controller('StockController', function($scope, $rootScope, $q, $timeout, $md
           page: 1,
           search:''
         };  
+        $scope.user = OdooService.getUser();
         $scope.products = [];
-        console.log($scope.$parent);
+        $scope.statusMap = {"draft":"New", "cancel":"Cancelled", "confirmed" : "Confirmed", "assigned":"Ordered", "done": "Completed"};
+        $scope.currentStatus = false;
     };	
+    
+    
     init();    
 
   OdooService.getAllData('stock.move', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){
       console.log(response);
         $scope.stock = response;
         console.log(response);
+        angular.element(".statusSelect").on("focus",function(){
+            console.log(this.value);
+        });        
         OdooService.getAllData('product.template', 1, 99999, 'name').then(function(response2){
             console.log(response2);
             $scope.products = response2.data;        
@@ -221,15 +233,57 @@ app.controller('StockController', function($scope, $rootScope, $q, $timeout, $md
 
   });
   
+
   
-  $scope.getStatusTypes = function () {
-    return ['draft', 'cancel', 'confirmed', 'assigned', 'done'];
-  };
-  
-  $scope.changeStatus = function(stock){
+  $scope.changeStatus = function(stock, oldState){
+        console.log(oldState);
+        if (oldState === "done" && stock.state === "cancel"){
+            $scope.cancelStock(stock);
+        }else{
         var map = {draft:"draft", cancel: "cancel", confirmed:"confirm", assigned:"assign", done:"done"};
-        OdooService.changeState('stock.move', map[stock.state], [stock.id])
+        OdooService.changeState('stock.move', map[stock.state], [stock.id]).then(function(){
+            $scope.$parent.showToast('Status changed!');
+        });
+        }
   }
+  
+  $scope.invalidStatus = function(){
+      for (var index in $scope.selected){
+          var selected = $scope.selected[index];
+          
+          if (selected.state === "done"){return true;}
+      }
+      return false;
+      
+    }
+    
+    $scope.cancelStock = function(stock){
+            //create a dummy order
+            var cancelStock = {"partner_id":$scope.user.user.partnerid,"partner_invoice_id":$scope.user.user.partnerid,"partner_shipping_id":$scope.user.user.partnerid,"project_id":false, "client_order_ref":false,"warehouse_id":1,"pricelist_id":1,"incoterm":false,"picking_policy":"direct","order_policy":"manual","user_id":1,"section_id":false,"origin":false,"payment_term":false,"fiscal_position":false,"message_follower_ids":false,"message_ids":false};
+            cancelStock["date_order"] = new Date();
+            cancelStock["note"] = "Stock " + stock.id + " destroyed by " + OdooService.getUser().user.username;
+            cancelStock["order_line"] = [];
+            cancelStock.order_line.push([0,false,{"delay":7,"th_weight":0,"product_packaging":false,"product_id":stock.product_id[0],"name":"STOCK " + stock.id + " DESTROYED","product_uom_qty":stock.product_uom_qty,"product_uom":1,"product_uos_qty":1,"product_uos":false,"route_id":false,"price_unit":0,"tax_id":[[6,false,[]]],"discount":0}]);
+            OdooService.updateData('stock.move', [stock.id], {name:"DESTROYED: " + stock.name}, {context: {lang: "en_US", tz: "Pacific/Auckland", uid: 1, params: {action: 352}}}).then(function(data){
+                console.log(data);
+                OdooService.addData('sale.order',cancelStock).then(function(data){                    
+                        var orderId = data.data.data.result; 
+                        OdooService.changeState('sale.order', "button_confirm", [orderId]).then(function(){ //confirm it
+                                OdooService.getAllData('stock.move', 1, 1, "-id").then(function(response){ //find the negative stock that just created
+                                    var stockId = response.data[0].id;
+                                    OdooService.changeState('stock.move', "done", [stockId]).then(function(){ //confirm the negative stock
+                                        $scope.$parent.showToast('Item cancelled!'); //stock has been reduced
+                                        OdooService.getAllData('stock.move', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){$scope.stock = response;OdooService.changeState('sale.order', "done", [orderId])}); 
+                                    });
+                                }); 
+                            });      
+                });   
+            });
+    }
+    
+    $scope.isDestroyed = function(stockItem){
+        return (stockItem.name.indexOf("DESTROYED") > -1);
+    }
   
   $scope.onPageChange = function(page, limit) {
     $scope.query.page = page;
@@ -323,7 +377,7 @@ app.controller('StockController', function($scope, $rootScope, $q, $timeout, $md
     $scope.getProduct = function(stock){
         if ($scope.stock.length < 1){return;}
         if (stock.product_id){
-            var stockProductId = stock.product_id[0] -4;
+            var stockProductId = stock.product_id[0] - 4
             for (var index in $scope.products){
                 var product = $scope.products[index];
                 if (product.id === stockProductId){stock.breed = product.name; return stock.breed;}
@@ -396,6 +450,7 @@ function StockDialogController($scope, $mdDialog, $timeout, Upload, WEB_API_URL,
         }   
     } //cr, uid, id, field, value, arg
     $scope.convertForOdoo = function(object){
+        if (object.location_dest_id && object.location_dest_id[1] === 'Partner Locations/Customers'){object.product_uom_qty = -object.product_uom_qty;}
         return {
             name:object.name,
             product_id:$scope.productsMap[object.breed],
@@ -407,7 +462,8 @@ function StockDialogController($scope, $mdDialog, $timeout, Upload, WEB_API_URL,
             product_uom:1,
             x_quality:object.x_quality,
             x_img_url:object.x_img_url,
-            x_notes:object.x_notes
+            x_notes:object.x_notes,
+            x_held_by:object.x_held_by
 
         }
     };
@@ -594,6 +650,8 @@ app.controller('OrdersController', function($scope, $rootScope, $q, $timeout, $m
           search:''
         };  
         $scope.products = [];
+        $scope.productsMap = {};
+        $scope.statusMap = {draft:"New", cancel: "Cancelled", progress:"Invoiced", manual:"Confirmed", sent:"Sent", done:"Completed"};
         console.log($scope.$parent);
     };	
     init();    
@@ -603,7 +661,16 @@ app.controller('OrdersController', function($scope, $rootScope, $q, $timeout, $m
         $scope.orders = response;
         OdooService.getAllData('product.template', 1, 99999, 'name').then(function(response2){
             console.log(response2);
-            $scope.products = response2.data;        
+            $scope.products = response2.data;   
+
+            for (var index in $scope.products){
+                var product = $scope.products[index];
+                $scope.productsMap[product.name] = product;
+            }
+            
+            $scope.canBeMet($scope.orders.data);
+            
+
 
         });
 
@@ -616,6 +683,7 @@ app.controller('OrdersController', function($scope, $rootScope, $q, $timeout, $m
     var deferred = $q.defer();
     OdooService.getAllData('sale.order', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){
         $scope.orders  = response;
+        $scope.canBeMet($scope.orders.data);
         deferred.resolve(response);
     });
     
@@ -626,12 +694,45 @@ app.controller('OrdersController', function($scope, $rootScope, $q, $timeout, $m
     var deferred = $q.defer();
     OdooService.getAllData('sale.order', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){
         $scope.orders = response;
+        $scope.canBeMet($scope.orders.data);
         $scope.query.order = order;
         deferred.resolve(response);
     });
     
     return deferred.promise;
   };  
+  
+    $scope.canBeMet = function(orders){
+        var lineItems = [],orderLineMap = {};
+
+        for (var index in orders){ //collect line items
+            orders[index].canBeMet = true;
+            if (orders[index].state !== "done"){ //dont bother if order is already done
+                for (var index2 in orders[index].order_line){
+                    lineItems.push(orders[index].order_line[index2]);
+                    orderLineMap[orders[index].order_line[index2]] = orders[index];
+                }
+            }
+            else{orders[index].canBeMet = false;}
+        }
+
+        //do one great call to odoo. this stops odoo expiring the session if too many requests are sent
+        OdooService.getData("sale.order.line", lineItems,["sequence","delay","state","th_weight","product_packaging","product_id","name","product_uom_qty","product_uom","product_uos_qty","product_uos","route_id","price_unit","tax_id","discount","price_subtotal"]).then(function(data){
+
+            for (var index in data){
+                var line = data[index], order = orderLineMap[line.id], product = $scope.productsMap[line.product_id[1]];
+                if (product.qty_available >= line.product_uom_qty){
+                    order.canBeMet = order.canBeMet && true;
+                }
+                else{order.canBeMet = false;}   
+            }
+  
+        });        
+    };
+       
+      
+  
+  
   
   $scope.getStatusTypes = function () {
     return ['draft', 'cancel', 'sent', 'progress', 'manual', 'done'];
@@ -641,11 +742,16 @@ app.controller('OrdersController', function($scope, $rootScope, $q, $timeout, $m
         var map = {draft:"draft", cancel: "cancel", progress:"progress", manual:"button_confirm", sent:"sent", done:"done"};
         console.log(map[order.state]);
         if (order.state === "progress"){
-            OdooService.createInvoice(order);
+            OdooService.createInvoice(order).then(function(){
+                $scope.$parent.showToast('Invoice sent!');
+            });
         }
         else{
             OdooService.changeState('sale.order', map[order.state], [order.id]);
         }
+        
+
+        
   }  
   
   $scope.sendInvoice = function(order){
@@ -694,7 +800,7 @@ app.controller('OrdersController', function($scope, $rootScope, $q, $timeout, $m
         }).then(function(newOrder){
             OdooService.addData('sale.order',newOrder.create).then(function(){
                 $scope.$parent.showToast('New item added!');               
-                OdooService.getAllData('sale.order', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){$scope.orders = response;})
+                OdooService.getAllData('sale.order', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){$scope.orders = response;$scope.canBeMet($scope.orders.data);})
             },function(){
                 $scope.$parent.showToast('Failed to add item');       
             });
@@ -712,7 +818,7 @@ app.controller('OrdersController', function($scope, $rootScope, $q, $timeout, $m
           }).then(function(order){
             OdooService.updateData('sale.order',order.update.ids, order.update.data, {context: {lang: "en_US", tz: "Pacific/Auckland", uid: 1, params: {action: 380}}}).then(function(){
                 $scope.$parent.showToast('Items updated!');              
-                OdooService.getAllData('sale.order', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){$scope.orders = response;})
+                OdooService.getAllData('sale.order', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){$scope.orders = response;$scope.canBeMet($scope.orders.data);})
             },function(){
                 $scope.$parent.showToast('Failed to update items');
             });
@@ -737,7 +843,7 @@ app.controller('OrdersController', function($scope, $rootScope, $q, $timeout, $m
           }).then(function(removeOrder){
                 OdooService.removeData('sale.order',removeOrder.remove).then(function(){
                     $scope.$parent.showToast('Items removed!');        
-                OdooService.getAllData('sale.order', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){$scope.orders = response;});
+                OdooService.getAllData('sale.order', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){$scope.orders = response;$scope.canBeMet($scope.orders.data);});
                 },function(){
                     $scope.$parent.showToast('Failed to remove items');
                 });
@@ -776,14 +882,35 @@ function OrderDialogController($scope, $mdDialog, $timeout, Upload, WEB_API_URL,
         });
     }
     
-    
+    $scope.getQuantityTotal = function(data, line){
+        console.log(data);
+        var selectedProduct;
+        for (var index in products){
+            var product = products[index];
+            if (product.name === data){
+                selectedProduct = product;
+                break;
+            }
+        }      
+        $timeout(function(){
+            var lineItems = selected.length > 0 ? $scope.order.lineItems : $scope.newOrder.lineItems;
+            console.log(lineItems);
+            for (var index in lineItems){
+                if (lineItems[index].name === data){
+                    lineItems[index].quantityAvailable = selectedProduct.qty_available;
+                }
+            }
+        },1000);
+    }
     
     $scope.products = [];
     $scope.productsMap = {};
+    $scope.productsPriceMap = {};
     for (var index in products){
         var product = products[index];
         $scope.products.push(product.name);
         $scope.productsMap[product.name] = product.id +4;
+        $scope.productsPriceMap[product.name] = product.list_price;
     }
 
     $scope.addLineItem = function(lineItems){
@@ -808,6 +935,7 @@ function OrderDialogController($scope, $mdDialog, $timeout, Upload, WEB_API_URL,
     };
     $scope.create = function() {
       for (var index in $scope.newOrder.lineItems){if (!$scope.newOrder.lineItems[index].name || !$scope.newOrder.lineItems[index].product_uom_qty){return;}}
+      console.log($scope.convertForOdoo($scope.newOrder));
       $mdDialog.hide({create:$scope.convertForOdoo($scope.newOrder)});
     };
     $scope.confirm = function() {
@@ -838,10 +966,10 @@ function OrderDialogController($scope, $mdDialog, $timeout, Upload, WEB_API_URL,
         for (var index in object.lineItems){
             var line = object.lineItems[index];
             if (line.id){
-                order.order_line.push([1,line.id,{"product_uom_qty":line.product_uom_qty,"product_id":$scope.productsMap[line.name],"name":line.name}]);               
+                order.order_line.push([1,line.id,{"product_uom_qty":line.product_uom_qty,"product_id":$scope.productsMap[line.name],"name":line.name, "price_unit":$scope.productsPriceMap[line.name]}]);               
             }
             else{
-                order.order_line.push([0,false,{"delay":7,"th_weight":0,"product_packaging":false,"product_id":$scope.productsMap[line.name],"name":line.name,"product_uom_qty":line.product_uom_qty,"product_uom":1,"product_uos_qty":1,"product_uos":false,"route_id":false,"price_unit":100,"tax_id":[[6,false,[]]],"discount":0}]);
+                order.order_line.push([0,false,{"delay":7,"th_weight":0,"product_packaging":false,"product_id":$scope.productsMap[line.name],"name":line.name,"product_uom_qty":line.product_uom_qty,"product_uom":1,"product_uos_qty":1,"product_uos":false,"route_id":false,"price_unit":$scope.productsPriceMap[line.name],"tax_id":[[6,false,[]]],"discount":0}]);
             }
         }         
         return order;

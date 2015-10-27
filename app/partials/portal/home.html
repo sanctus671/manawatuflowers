@@ -25,7 +25,7 @@
         <md-grid-tile class="green products">
             <a ui-sref="portal.products">
                 <img ng-if="products[4].image" ng-src="data:image/jpg;base64,{{products[4].image}}"/>
-                <h1>{{products[4].virtual_available}}</h1>      
+                <h1>{{products[4].qty_available}}</h1>      
                 <md-grid-tile-footer>
                   <h3>{{products[4].name}}</h3>
                 </md-grid-tile-footer>
@@ -35,7 +35,7 @@
         <md-grid-tile class="yellow products">
             <a ui-sref="portal.products">
                 <img ng-if="products[3].image" ng-src="data:image/jpg;base64,{{products[3].image}}"/>
-                <h1>{{products[3].virtual_available}}</h1>      
+                <h1>{{products[3].qty_available}}</h1>      
                 <md-grid-tile-footer>
                   <h3>{{products[3].name}}</h3>
                 </md-grid-tile-footer>
@@ -45,7 +45,7 @@
         <md-grid-tile class="blue products" md-rowspan="3" md-colspan-sm="1">
             <a ui-sref="portal.products">
                 <img ng-if="products[2].image" ng-src="data:image/jpg;base64,{{products[2].image}}"/>
-                <h1>{{products[2].virtual_available}}</h1>      
+                <h1>{{products[2].qty_available}}</h1>      
                 <md-grid-tile-footer>
                   <h3>{{products[2].name}}</h3>
                 </md-grid-tile-footer>
@@ -55,7 +55,7 @@
         <md-grid-tile class="red products" md-rowspan="2" md-colspan="2" md-colspan-sm="1">
             <a ui-sref="portal.products">
                 <img ng-if="products[1].image" ng-src="data:image/jpg;base64,{{products[1].image}}"/>
-                <h1>{{products[1].virtual_available}}</h1>                
+                <h1>{{products[1].qty_available}}</h1>                
                 <md-grid-tile-footer>
                   <h3>{{products[1].name}}</h3>
                 </md-grid-tile-footer>
@@ -65,7 +65,7 @@
         <md-grid-tile class="green products force-top" md-rowspan="3" md-colspan-sm="1">
             <a ui-sref="portal.products">
                 <img ng-if="products[0].image" ng-src="data:image/jpg;base64,{{products[0].image}}"/>
-                <h1>{{products[0].virtual_available}}</h1>
+                <h1>{{products[0].qty_available}}</h1>
                 <md-grid-tile-footer>
                   <h3>{{products[0].name}}</h3>
                 </md-grid-tile-footer>

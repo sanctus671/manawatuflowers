@@ -23,7 +23,11 @@
       </div>
       <md-input-container class="autocomplete-container" flex>
         <autocomplete ng-model="stock.breed" data="products" attr-input-class="md-input" attr-placeholder="Find Breed..."></autocomplete>
-      </md-input-container>            
+      </md-input-container>   
+      <md-input-container flex>
+        <label>Currently Held By</label>
+        <input type="text" ng-model="stock.x_held_by">
+      </md-input-container>          
       <div layout layout-sm="column">
         <md-input-container flex>
           <label>Quality</label>

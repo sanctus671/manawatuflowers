@@ -19,14 +19,14 @@
           <md-datepicker ng-model="order.date_order" md-placeholder="Order Date"></md-datepicker>
         </md-input-container>        
         <div layout layout-sm="column" ng-repeat="line in order.lineItems">
-            <md-input-container class="autocomplete-container" flex style="width:70%">
-                <autocomplete ng-model="line.name" data="products" name="breed" autocomplete-required="true" attr-input-class="md-input" attr-placeholder="Find Breed..."></autocomplete>
+            <md-input-container class="autocomplete-container" flex style="width:55%">
+                <autocomplete ng-model="line.name" data="products" name="breed" autocomplete-required="true" attr-input-class="md-input" attr-placeholder="Find Breed..." on-select="getQuantityTotal"></autocomplete>
                 <div ng-messages="orderForm.breed.$error">
                     <div ng-message="required">This is required.</div>
                 </div>
             </md-input-container>   
-            <md-input-container style="width:20%; padding-left: 40px; padding-right: 20px;">
-                <label>Quantity</label>
+            <md-input-container style="width:35%; padding-left: 40px; padding-right: 20px;">
+                <label>Quantity <span ng-if="line.quantityAvailable">({{line.quantityAvailable}} available)</span></label>
                 <input type="number" name="quantity" required ng-model="line.product_uom_qty">
                 <div ng-messages="orderForm.quantity.$error">
                     <div ng-message="required">This is required.</div>

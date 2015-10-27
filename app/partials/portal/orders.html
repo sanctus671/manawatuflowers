@@ -60,17 +60,17 @@
                 <th order-by="amount_total" name="Total"></th>
                 <th order-by="create_date" name="Date Created"></th>
                 <th order-by="date_order" name="Order Date"></th>
-                <th order-by="partner_id" name="User"></th>
+                <th order-by="partner_id" name="Customer"></th>
                 <th order-by="note" name="Notes"></th>
               </tr>
             </thead>
             <tbody>
               <tr md-auto-select ng-repeat="order in orders.data  | filter:query.search ">
-                <td>{{order.id}}</td>
+                <td ng-class="{'canbemet':order.canBeMet}">{{order.id}}</td>
                 <td>{{order.name}}</td>
                 <td>
                   <md-select ng-model="order.state" placeholder="Other" md-on-close="changeStatus(order)">
-                    <md-option ng-value="type" ng-repeat="type in getStatusTypes()" ng-disabled="type === 'progress' || type==='draft' || type==='sent'">{{type}}</md-option>
+                    <md-option ng-value="status" ng-repeat="(status, statusTrans) in statusMap" ng-disabled="status === 'progress' || status==='draft' || status==='sent' || status==='progress' || (status=='done' && (order.state !== 'manual' && order.state !== 'progress')) || order.state === 'done' || order.state === 'cancel'">{{statusTrans}}</md-option>
                   </md-select>
                 </td>
                 <td class="clickable" ng-click="viewProducts($event,order)">{{order.order_line.length}} items</td>
