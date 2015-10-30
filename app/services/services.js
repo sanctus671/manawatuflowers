@@ -9,7 +9,7 @@ app.service('MainService', function ($http, $q, localStorageService, WEB_API_URL
 
 
 
-app.service('OdooService', function ($http, $q, WEB_API_URL, localStorageService) {
+app.service('OdooService', function ($http, $q, $state, WEB_API_URL, localStorageService) {
     this.login = function(username, password){
         var deferred = $q.defer();
         $http.post(WEB_API_URL + '?login=true' + 
@@ -126,10 +126,10 @@ app.service('OdooService', function ($http, $q, WEB_API_URL, localStorageService
         '&sessionid=' + user.user.session_id;
 
         if (type === "stock.move" && (user.user.type === "picker" || user.user.type === "grower")){
-                //query = query +  '&partnerid=' + user.user.partnerid;
+                query = query +  '&partnerid=' + user.user.partnerid;
         }
         else if (type === "sale.order" && (user.user.type === "buyer")){
-                //query = query +  '&partnerid=' + user.user.partnerid;
+                query = query +  '&partnerid=' + user.user.partnerid;
         }
 
         $http.post(WEB_API_URL + query).  
@@ -137,9 +137,19 @@ app.service('OdooService', function ($http, $q, WEB_API_URL, localStorageService
             console.log(response);
             if (response.data.result === true){
                 //deferred.resolve({"count":testData.count,"data":testData.data.slice(page*limit - limit,page*limit)});
+                if (response.data.data.count === null){
+                    OdooService.logout();
+                    $state.go("login");
+                    deferred.reject(response);                    
+                }
                 deferred.resolve(response.data.data);
             }
-            else{deferred.reject(response);}
+            else{
+                if (response.data.data.error.message === "Odoo Session Expired");
+                    OdooService.logout();
+                    $state.go("login");
+                    deferred.reject(response);  
+            }
             }, function(response) {
                 deferred.reject(response);
             });

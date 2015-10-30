@@ -17,8 +17,8 @@
                 <md-list-item>
                     <md-button ui-sref="portal.home">Home</md-button>
                 </md-list-item>
-                <md-divider></md-divider>                
-                <md-list-item>
+                <md-divider ng-show="user.type !== 'buyer'"></md-divider>                
+                <md-list-item ng-show="user.type !== 'buyer'">
                     <md-button ui-sref="portal.stock">Stock</md-button>
                 </md-list-item>
                 <md-divider></md-divider>  

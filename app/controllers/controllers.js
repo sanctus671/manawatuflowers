@@ -3,6 +3,10 @@ app.controller('MainController', function ($scope, $timeout, $rootScope, $state,
         $scope.alerts = [];
         $scope.productsMap = {};
     };	
+    
+    $scope.userData = $rootScope.currentUser;
+    $scope.user = $scope.userData.user;
+    $scope.partner = $scope.userData.partner;    
     $scope.toggleNav = $mdUtil.debounce(function(){$mdSidenav("left").toggle()},200);
     $scope.logout = function(){
         OdooService.logout().then(function(){
@@ -121,7 +125,7 @@ app.controller('ForgotPasswordController', function ($scope, $state,$mdToast, $r
     
     });  
     
-app.controller('HomeController', function($scope, OdooService){
+app.controller('HomeController', function($scope,$rootScope, OdooService){
     var init = function init(){
         $scope.user = {};
         $scope.latest = [];
@@ -129,7 +133,7 @@ app.controller('HomeController', function($scope, OdooService){
         $scope.itemType = "Orders";
     }
  
-    $scope.userData = OdooService.getUser();
+    $scope.userData = $rootScope.currentUser;
     $scope.user = $scope.userData.user;
     $scope.partner = $scope.userData.partner;
 
@@ -189,6 +193,9 @@ app.controller('AccountController', function ($scope, $rootScope, OdooService) {
         
         OdooService.updateUser($scope.user).then(function(data){
             console.log(data);
+            if (data.data.user.type){
+                $rootScope.currentUser.user.type = data.data.user.type;
+            }
             $scope.$parent.showToast('User Updated!'); 
         },function(){
             $scope.$parent.showToast('Failed to update user'); 
@@ -209,7 +216,7 @@ app.controller('StockController', function($scope, $rootScope, $q, $timeout, $md
           page: 1,
           search:''
         };  
-        $scope.user = OdooService.getUser();
+        $scope.user = $rootScope.currentUser;
         $scope.products = [];
         $scope.statusMap = {"draft":"New", "cancel":"Cancelled", "confirmed" : "Confirmed", "assigned":"Ordered", "done": "Completed"};
         $scope.currentStatus = false;
@@ -483,10 +490,11 @@ app.controller('ProductsController', function($scope, $rootScope, $q, $timeout, 
           search:''
         };  
         $scope.products = [];
-        console.log($scope.$parent);
     };	
     init();    
-
+    
+  $scope.userData = $rootScope.currentUser;
+  $scope.user = $scope.userData.user;
   OdooService.getAllData('product.template', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){
       console.log(response);
         $scope.products = response;
@@ -882,7 +890,7 @@ function OrderDialogController($scope, $mdDialog, $timeout, Upload, WEB_API_URL,
         });
     }
     
-    $scope.getQuantityTotal = function(data, line){
+    $scope.getQuantityTotal = function(data){
         console.log(data);
         var selectedProduct;
         for (var index in products){

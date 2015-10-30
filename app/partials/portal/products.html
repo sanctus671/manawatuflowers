@@ -7,7 +7,7 @@
             Filter products
         </md-tooltip>          
     </md-button>
-    <md-button class="md-fab md-mini" ng-click="addItem($event)" ng-disabled="">
+    <md-button class="md-fab md-mini" ng-click="addItem($event)" ng-disabled="" ng-show="user.type === 'admin'">
         <md-icon md-svg-icon="css/icons/ic_add_white_24px.svg"></md-icon>
         <md-tooltip>
             Add new product
@@ -30,13 +30,13 @@
         <md-data-table-toolbar class="alternate" ng-show="selected.length">
             <div>{{selected.length}} {{selected.length > 1 ? 'items' : 'item'}} selected</div>
             <div flex=""></div>  
-            <md-button class="" ng-click="editItem($event)" ng-show="true" ng-disabled="products.length < 1">
+            <md-button class="" ng-click="editItem($event)" ng-show="user.type === 'admin'" ng-disabled="products.length < 1">
                 <md-icon md-svg-icon="css/icons/ic_mode_edit_black_24px.svg"></md-icon> Edit
                 <md-tooltip>
                     Edit selected orders
                 </md-tooltip>                  
             </md-button>             
-            <md-button class="" ng-click="removeItem($event)">
+            <md-button class="" ng-click="removeItem($event)" ng-show="user.type === 'admin'">
                 <md-icon md-svg-icon="css/icons/ic_delete_black_24px.svg"></md-icon> Remove
                 <md-tooltip>
                     Remove selected orders

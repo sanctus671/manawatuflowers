@@ -88,18 +88,31 @@ app.config(function($stateProvider, $urlRouterProvider, $locationProvider, $http
 app.constant('WEB_API_URL', 'http://test.triotech.co.nz/flowers/');
 
 app.run(function($rootScope, $state, localStorageService){
+    
+    $rootScope.$on( "$stateChangeStart", function(event, toState, toParams, fromState, fromParams){        
+        $rootScope.currentUser = localStorageService.get("user");
+        if(toState.name === "portal.stock" && $rootScope.currentUser.user.type === "buyer"){
+            event.preventDefault();
+            $state.go("portal.home");
+        };
+    });    
+    
     $rootScope.$on('$stateChangeSuccess',function(event, toState, toParams, fromState, fromParams){
         $rootScope.currentState = toState.name;
-        $rootScope.currentUser = localStorageService.get("user");
+        
         if (toState.authenticate && !$rootScope.currentUser){
             event.preventDefault();
             $state.go('login');
         }
         else if (!toState.authenticate && $rootScope.currentUser){
-            //$state.go('portal.home');
+            $state.go('portal.home');
         }
+        
  
     });
+
+    
+    
 });
 
 
