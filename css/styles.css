@@ -1,5 +1,6 @@
 /*GENERAL PAGE STYLING**********************************************************/
-a{
+a, a:active, a:focus{
+    color: black;
     -webkit-transition: all 0.3s ease;                  
     -moz-transition: all 0.3s ease;                 
     -o-transition: all 0.3s ease;   
@@ -20,7 +21,7 @@ a{
     text-decoration: none;
 }
 a:hover{
-    color:rgb(63,81,181);
+    color:#111;
 }
 
 
@@ -70,7 +71,7 @@ a:hover{
     z-index:99;
 }
 .login-heading{
-    margin: 20px 0px 30px;
+    margin: 20px 0px 40px;
     text-transform: uppercase;
 }
 
@@ -97,6 +98,7 @@ a:hover{
 md-progress-circular.login-load{
     position: absolute;
     top: 0px;
+        left: 0px;
 }
 
 /*HOME PAGE*********************************************************************/
@@ -117,6 +119,10 @@ md-progress-circular.login-load{
   background: #ff8a80; }
 .homeGrid md-grid-tile {
   transition: all 400ms ease-out 50ms; }
+
+.products img{
+    border-radius:2px;
+}
 
 md-list.latest-items{
 position: absolute;

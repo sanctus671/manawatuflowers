@@ -1,7 +1,7 @@
 <md-data-table-toolbar ng-hide="selected.length || filter.show" aria-hidden="false" class="">
   <h2 class="md-title">Products</h2>
   <div flex=""></div>
-    <md-button class="md-fab md-primary md-mini" ng-click="filter.show = true">
+    <md-button class="md-fab md-primary md-mini" ng-click="filter.show = true" ng-disabled="products.length < 1">
         <md-icon md-svg-icon="css/icons/ic_filter_list_white_24px.svg"></md-icon> 
         <md-tooltip>
             Filter products
@@ -19,10 +19,10 @@
 <md-data-table-toolbar ng-show="filter.show && !selected.length">
   <form flex="" name="filter.form">
       <md-input-container md-no-float class="filter-input">
-          <input type="text" ng-model="query.search" placeholder="search">
+          <input type="text" ng-model="query.search" placeholder="search" on-enter="onSearch()">
       </md-input-container>
   </form>
-    <md-button ng-click="filter.show = false">
+    <md-button ng-click="filter.show = false;closeSearch()">
         <md-icon md-svg-icon="css/icons/ic_close_black_24px.svg"></md-icon>
     </md-button>
 </md-data-table-toolbar>
@@ -62,7 +62,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr md-auto-select ng-repeat="product in products.data  | filter:query.search ">
+              <tr md-auto-select ng-repeat="product in products.data">
                 <td>{{product.id | no_false}}</td>
                 <td>{{product.name | no_false}}</td>
                 <td><img class="stock-thumbnail" ng-if="product.image_small" ng-src="data:image/jpg;base64,{{product.image_small | no_false}}"></td>

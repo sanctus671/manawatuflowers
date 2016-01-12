@@ -1,5 +1,5 @@
 <md-data-table-toolbar aria-hidden="false" class="">
-  <h2 class="md-title">Account</h2>
+  <h2 class="md-title">{{user.type | capitalize}} Account</h2>
   <div flex=""></div>
 </md-data-table-toolbar>
 
@@ -38,19 +38,27 @@
                 <input name="confirmPassword" ng-model="user.passwordconfirm" type="password">            
             </md-input-container>
             
-            <md-radio-group ng-model="user.type" class="md-primary">
+            <md-radio-group ng-model="user.type" class="md-primary" ng-if="false">
                 <label>I am a:</label>
                 <md-radio-button value="buyer">Buyer</md-radio-button>
                 <md-radio-button value="grower">Grower</md-radio-button>
                 <md-radio-button value="picker">Picker</md-radio-button>
-            </md-radio-group>     
+            </md-radio-group>  
+            
+          
             
             
             <md-input-container class="md-icon-float" >
                 <label>Email</label>
                 <md-icon md-svg-icon="css/icons/ic_email_black_24px.svg"></md-icon>
                 <input ng-model="partner.email" type="text">
-            </md-input-container>   
+            </md-input-container>  
+            
+                <label>Default Flower Type:</label>
+            <md-input-container class="autocomplete-container" flex>
+
+              <autocomplete ng-model="user.defaultProduct" data="products" attr-input-class="md-input" attr-placeholder="Default Flower Type"></autocomplete>
+            </md-input-container>              
   
             <md-button class="md-raised md-accent" ng-click="updateUser()">Update</md-button>
             

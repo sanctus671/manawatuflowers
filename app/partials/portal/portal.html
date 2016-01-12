@@ -54,6 +54,9 @@
                     </md-button>
 
                     <md-menu-content class="account-dropdown">
+                        <md-menu-item ng-show="user.type === 'admin'">
+                            <md-button ng-click="$mdCloseMenu()" ui-sref="portal.register" >Register New Account</md-button>
+                        </md-menu-item>                        
                         <md-menu-item>
                             <md-button ng-click="$mdCloseMenu()" ui-sref="portal.account">My Account</md-button>
                         </md-menu-item>

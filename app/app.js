@@ -64,10 +64,11 @@ app.config(function($stateProvider, $urlRouterProvider, $locationProvider, $http
       controller: "LoginController"
 
     })
-    .state('register', {
+    .state('portal.register', {
       url: "/register",
-      templateUrl: "app/partials/auth/register.html",
-      controller: "RegisterController"
+      templateUrl: "app/partials/portal/register.html",
+      controller: "RegisterController",
+      authenticate:true
 
     })
     .state('forgotpassword', {
@@ -132,4 +133,24 @@ app.filter('false_zero', function() {
         }
         return 0;
     }
+});
+
+app.filter('capitalize', function() {
+    return function(input) {
+      return (!!input) ? input.charAt(0).toUpperCase() + input.substr(1).toLowerCase() : '';
+    }
+});
+
+app.directive('onEnter', function () {
+    return function (scope, element, attrs) {
+        element.bind("keydown keypress", function (event) {
+            if(event.which === 13) {
+                scope.$apply(function (){
+                    scope.$eval(attrs.onEnter);
+                });
+
+                event.preventDefault();
+            }
+        });
+    };
 });

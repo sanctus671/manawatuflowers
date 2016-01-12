@@ -1,7 +1,7 @@
 <md-data-table-toolbar ng-hide="selected.length || filter.show" aria-hidden="false" class="">
   <h2 class="md-title">Orders</h2>
   <div flex=""></div>
-    <md-button class="md-fab md-primary md-mini" ng-click="filter.show = true">
+    <md-button class="md-fab md-primary md-mini" ng-click="filter.show = true" ng-disabled="products.length < 1">
         <md-icon md-svg-icon="css/icons/ic_filter_list_white_24px.svg"></md-icon> 
         <md-tooltip>
             Filter orders
@@ -18,10 +18,10 @@
 <md-data-table-toolbar ng-show="filter.show && !selected.length">
   <form flex="" name="filter.form">
       <md-input-container md-no-float class="filter-input">
-          <input type="text" ng-model="query.search" placeholder="search">
+          <input type="text" ng-model="query.search" placeholder="search" on-enter="onSearch()">
       </md-input-container>
   </form>
-    <md-button ng-click="filter.show = false">
+    <md-button ng-click="filter.show = false;closeSearch()">
         <md-icon md-svg-icon="css/icons/ic_close_black_24px.svg"></md-icon>
     </md-button>
 </md-data-table-toolbar>
@@ -65,11 +65,11 @@
               </tr>
             </thead>
             <tbody>
-              <tr md-auto-select ng-repeat="order in orders.data  | filter:query.search ">
+              <tr md-auto-select ng-repeat="order in orders.data ">
                 <td ng-class="{'canbemet':order.canBeMet}">{{order.id}}</td>
                 <td>{{order.name}}</td>
                 <td>
-                  <md-select ng-model="order.state" placeholder="Other" md-on-close="changeStatus(order)">
+                  <md-select ng-model="order.state" placeholder="Other" ng-change="changeStatus($event, order, '{{order.state}}')">
                     <md-option ng-value="status" ng-repeat="(status, statusTrans) in statusMap" ng-disabled="status === 'progress' || status==='draft' || status==='sent' || status==='progress' || (status=='done' && (order.state !== 'cancel'&& order.state !== 'progress')) || order.state === 'done' || order.state === 'cancel'">{{statusTrans}}</md-option>
                   </md-select>
                 </td>

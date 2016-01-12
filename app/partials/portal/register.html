@@ -1,7 +1,12 @@
-<md-content class="md-padding" layout-padding layout="row" layout-align="center center" layout-wrap>
+<md-data-table-toolbar aria-hidden="false" class="">
+  <h2 class="md-title">Register new account</h2>
+  <div flex=""></div>
+</md-data-table-toolbar>
 
-    <md-card flex="100" flex-gt-md="40" flex-gt-lg="25" layout-align="center center" layout-padding class="autoScroll login-form">
-        <h1 class="md-display-3 login-heading">Register</h1>
+
+<md-content flex="100" flex-gt-md="40" flex-gt-lg="25" layout-align="center center" layout-padding>
+
+
         <form name="registerForm">
             <md-input-container class="md-icon-float" >
                 <label>Username/Business Name</label>
@@ -30,7 +35,7 @@
             </md-input-container>
             
             <md-radio-group ng-model="user.type" class="md-primary">
-                <label>I am a:</label>
+                <label>Account is for a:</label>
                 <md-radio-button value="buyer">Buyer</md-radio-button>
                 <md-radio-button value="grower">Grower</md-radio-button>
                 <md-radio-button value="picker">Picker</md-radio-button>
@@ -42,28 +47,20 @@
                 <md-icon md-svg-icon="css/icons/ic_email_black_24px.svg"></md-icon>
                 <input ng-model="user.email" type="text">
             </md-input-container>   
-           
 
+                <label>Default Flower Type:</label>
+            <md-input-container class="autocomplete-container" flex>
 
-            <md-input-container >
-                <md-checkbox ng-model="user.terms" aria-label="Remember me">I agree with <a href="#">terms</a></md-checkbox>  
-            </md-input-container>        
-            <div class="login-button-container" >
-                <md-button class="md-fab md-primary login-button" aria-label="Register" ng-click="register()">
-                    <md-icon md-svg-icon="css/icons/ic_navigate_next_white_24px.svg"></md-icon>
-                    <md-tooltip>
-                        Click to register!
-                    </md-tooltip>              
-                </md-button>   
-            </div>
+              <autocomplete ng-model="user.defaultProduct" data="products" attr-input-class="md-input" attr-placeholder="Default Flower Type"></autocomplete>
+            </md-input-container>               
+            
+
+            <md-button class="md-raised md-accent" ng-click="register()">Register account</md-button>
+
         </form>
         <md-progress-circular class="login-load" md-mode="{{loading}}" md-diameter="20px"></md-progress-circular>
         <div class="error">{{error}}</div>        
-    </md-card>
-    <div flex="100" layout="column" layout-align="center center">
-        <p>
-            Already have an account? <a ui-sref="login">Login here</a>
-        </p>   
-    </div>
+
+
 
   </md-content>

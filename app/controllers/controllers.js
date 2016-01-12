@@ -71,16 +71,28 @@ app.controller('RegisterController', function ($scope, $rootScope,$state,$mdToas
             confirmpassword:"",
             email:"",
             company:"",
-            type:"buyer"
+            type:"buyer",
+            defaultProduct:""
         }
         $scope.error = "";
-    };	
+    };
+    $scope.products = [];
+    $scope.productsMap = {};
+   
+        $scope.products = [];
+        OdooService.getAllData('product.template', 1, 99999, 'name').then(function(response){
+            for (var index in response.data){
+                var product = response.data[index];
+                $scope.products.push(product.name);
+                $scope.productsMap[product.name] = product.id +4;
+            }  
+        });    
     
     
     $scope.register = function(){
         $scope.error = "";
         $scope.loading = "indeterminate";
-        OdooService.register($scope.user.username,$scope.user.password, $scope.user.passwordconfirm, $scope.user.type, $scope.user.email).then(function(){
+        OdooService.register($scope.user.username,$scope.user.password, $scope.user.passwordconfirm, $scope.user.type, $scope.user.email, $scope.productsMap[$scope.user.defaultProduct]).then(function(){
             $scope.loading = "";
             $mdToast.show($mdToast.simple().content('Registration successful!').position("top right").hideDelay(3000));
             $state.go("portal");
@@ -130,7 +142,9 @@ app.controller('HomeController', function($scope,$rootScope, OdooService){
         $scope.user = {};
         $scope.latest = [];
         $scope.products = [];
+        $scope.productsMap = {};
         $scope.itemType = "Orders";
+        $scope.specials = [];
     }
  
     $scope.userData = $rootScope.currentUser;
@@ -140,27 +154,45 @@ app.controller('HomeController', function($scope,$rootScope, OdooService){
    
     console.log($scope.userData);
     
+
+    
     OdooService.getAllData('product.template', 1, 5, '-id').then(function(response){
         console.log(response);
-        $scope.products = response.data;        
+        $scope.products = response.data;  
+        for (var index in response.data){
+            var product = response.data[index];
+            $scope.productsMap[product.id +4] = product;
+        }         
+        OdooService.getSpecials().then(function(response){
+            $scope.specials = response.data;
+            for (var index in $scope.specials){
+                console.log(index);
+                if (index == 2){$scope.specials[index]["rows"] = 3;$scope.specials[index]["smcols"] = 1;}
+                else if (index == 3){$scope.specials[index]["rows"] = 2;$scope.specials[index]["cols"] = 2; $scope.specials[index]["smcols"] = 1;}
+                else if (index == 4){$scope.specials[index]["rows"] = 3;$scope.specials[index]["smcols"] = 1;}
+                $scope.specials[index]["product"] = $scope.productsMap[$scope.specials[index].productid];
+            }
+            console.log($scope.specials);
+            console.log($scope.userData);
+             if ($scope.userData.user.type === "picker" || $scope.userData.user.type === "grower"){
+                 $scope.itemType = "Stock";
+                 OdooService.getAllData('stock.move', 1, 10, '-create_date').then(function(response){
+                     console.log(response);
+                     $scope.latest = response.data;
 
-   console.log($scope.userData);
-        if ($scope.userData.user.type === "picker" || $scope.userData.user.type === "grower"){
-            $scope.itemType = "Stock";
-            OdooService.getAllData('stock.move', 1, 10, '-create_date').then(function(response){
-                console.log(response);
-                $scope.latest = response.data;
+                 });        
+             }
+             else{
+                 $scope.itemType = "Orders";
+                 OdooService.getAllData('sale.order', 1, 10, '-create_date').then(function(response){
+                     console.log(response);
+                     $scope.latest = response.data;
 
-            });        
-        }
-        else{
-            $scope.itemType = "Orders";
-            OdooService.getAllData('sale.order', 1, 10, '-create_date').then(function(response){
-                console.log(response);
-                $scope.latest = response.data;
+                 });          
+             }            
+        });        
 
-            });          
-        }
+
     
     });      
     
@@ -187,9 +219,24 @@ app.controller('AccountController', function ($scope, $rootScope, OdooService) {
     $scope.user = $scope.userData.user;
     $scope.partner = $scope.userData.partner;
 
-    $scope.updateUser = function(){
+    $scope.products = [];
+    $scope.productsMap = {};
+   console.log($scope.user);
+        $scope.products = [];
+        OdooService.getAllData('product.template', 1, 99999, 'name').then(function(response){
+            for (var index in response.data){
+                var product = response.data[index];
+                if (parseInt(product.id + 4) === parseInt($scope.user.productid)){
+                    $scope.user.defaultProduct = product.name;
+                }
+                $scope.products.push(product.name);
+                $scope.productsMap[product.name] = product.id +4;
+            }  
+        }); 
 
-        angular.extend($scope.user, {"email":$scope.partner.email, "business":$scope.partner.business});
+    $scope.updateUser = function(){
+        $scope.user.productid = $scope.productsMap[$scope.user.defaultProduct];
+        angular.extend($scope.user, {"email":$scope.partner.email});
         
         OdooService.updateUser($scope.user).then(function(data){
             console.log(data);
@@ -242,7 +289,7 @@ app.controller('StockController', function($scope, $rootScope, $q, $timeout, $md
   
 
   
-  $scope.changeStatus = function(stock, oldState){
+  $scope.doChangeStatus = function(stock, oldState){
         console.log(oldState);
         if (oldState === "done" && stock.state === "cancel"){
             $scope.cancelStock(stock);
@@ -251,7 +298,23 @@ app.controller('StockController', function($scope, $rootScope, $q, $timeout, $md
         OdooService.changeState('stock.move', map[stock.state], [stock.id]).then(function(){
             $scope.$parent.showToast('Status changed!');
         });
-        }
+        }      
+  }
+  
+  
+  $scope.changeStatus = function(ev, stock, oldState){
+        var confirm = $mdDialog.confirm()
+                .title('Are you sure you want to change this status?')
+                .content('This is irreversable, so be sure you want to do this!')
+                .ariaLabel('Confirm status')
+                .targetEvent(ev)
+                .ok('Yes')
+                .cancel('No');      
+        $mdDialog.show(confirm).then(function() {
+          $scope.doChangeStatus(stock, oldState);
+        }, function() {
+          stock.state = oldState;
+        });
   }
   
   $scope.invalidStatus = function(){
@@ -291,26 +354,60 @@ app.controller('StockController', function($scope, $rootScope, $q, $timeout, $md
     $scope.isDestroyed = function(stockItem){
         return (stockItem.name.indexOf("DESTROYED") > -1);
     }
+    
+    $scope.onSearch = function(){
+        $scope.query.page = 1;
+        var search = ["|","|",["origin","ilike",$scope.query.search],["name","ilike",$scope.query.search],["picking_id","ilike",$scope.query.search]];
+        OdooService.searchData('stock.move', $scope.query.page, $scope.query.limit, $scope.query.order, search).then(function(response){
+            $scope.stock = response;
+        });
+    }
+    
+    $scope.closeSearch = function(){
+        $scope.query.page = 1;
+        OdooService.getAllData('stock.move', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){
+            $scope.stock = response;
+            deferred.resolve(response);
+        });
+    }    
   
   $scope.onPageChange = function(page, limit) {
     $scope.query.page = page;
     $scope.query.limit = limit;
     var deferred = $q.defer();
-    OdooService.getAllData('stock.move', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){
-        $scope.stock = response;
-        deferred.resolve(response);
-    });
+    if ($scope.query.search.length > 0){
+        var search = ["|","|",["origin","ilike",$scope.query.search],["name","ilike",$scope.query.search],["picking_id","ilike",$scope.query.search]];
+        OdooService.searchData('stock.move', $scope.query.page, $scope.query.limit, $scope.query.order, search).then(function(response){
+            $scope.stock = response;
+            deferred.resolve(response);
+        });        
+    }
+    else{
+        OdooService.getAllData('stock.move', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){
+            $scope.stock = response;
+            deferred.resolve(response);
+        });
+    }
     
     return deferred.promise;
   };
   
   $scope.onOrderChange = function(order) {
     var deferred = $q.defer();
-    OdooService.getAllData('stock.move', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){
-        $scope.stock = response;
-        $scope.query.order = order;
-        deferred.resolve(response);
-    });
+    if ($scope.query.search.length > 0){
+        var search = ["|","|",["origin","ilike",$scope.query.search],["name","ilike",$scope.query.search],["picking_id","ilike",$scope.query.search]];
+        OdooService.searchData('stock.move', $scope.query.page, $scope.query.limit, $scope.query.order, search).then(function(response){
+            $scope.stock = response;
+            deferred.resolve(response);
+        });        
+    }
+    else{    
+        OdooService.getAllData('stock.move', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){
+            $scope.stock = response;
+            $scope.query.order = order;
+            deferred.resolve(response);
+        });
+    }
     
     return deferred.promise;
   };
@@ -501,27 +598,61 @@ app.controller('ProductsController', function($scope, $rootScope, $q, $timeout, 
         
 
   });
-  
+
+    $scope.onSearch = function(){
+        $scope.query.page = 1;
+        var search = ["|", ["default_code", "ilike", $scope.query.search], ["name", "ilike", $scope.query.search]];
+        OdooService.searchData('product.template', $scope.query.page, $scope.query.limit, $scope.query.order, search).then(function(response){
+            $scope.products = response;
+        });
+    }    
+    
+    $scope.closeSearch = function(){
+        $scope.query.page = 1;
+        OdooService.getAllData('product.template', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){
+              $scope.products = response;
+        });
+    }     
   
   $scope.onPageChange = function(page, limit) {
     $scope.query.page = page;
     $scope.query.limit = limit;
     var deferred = $q.defer();
-    OdooService.getAllData('product.template', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){
-        $scope.products = response;
-        deferred.resolve(response);
-    });
+    if ($scope.query.search.length > 0){
+        var search = ["|", ["default_code", "ilike", $scope.query.search], ["name", "ilike", $scope.query.search]];
+        OdooService.searchData('product.template', $scope.query.page, $scope.query.limit, $scope.query.order, search).then(function(response){
+            $scope.products = response;
+            deferred.resolve(response);
+        });        
+    }
+    else{
+        OdooService.getAllData('product.template', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){
+            $scope.products = response;
+            deferred.resolve(response);
+        });
+    }    
+
     
     return deferred.promise;
   };
   
   $scope.onOrderChange = function(order) {
     var deferred = $q.defer();
-    OdooService.getAllData('product.template', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){
-        $scope.products = response;
-        $scope.query.order = order;
-        deferred.resolve(response);
-    });
+    if ($scope.query.search.length > 0){
+        var search = ["|", ["default_code", "ilike", $scope.query.search], ["name", "ilike", $scope.query.search]];
+        OdooService.searchData('product.template', $scope.query.page, $scope.query.limit, $scope.query.order, search).then(function(response){
+            $scope.products = response;
+            $scope.query.order = order;
+            deferred.resolve(response);
+        });        
+    }
+    else{
+        OdooService.getAllData('product.template', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){
+            $scope.products = response;
+            $scope.query.order = order;
+            deferred.resolve(response);
+        });
+    }       
     
     return deferred.promise;
   };  
@@ -684,28 +815,67 @@ app.controller('OrdersController', function($scope, $rootScope, $q, $timeout, $m
 
   });
   
+
+    $scope.onSearch = function(){
+        $scope.query.page = 1;
+        var search = ["|", ["client_order_ref", "ilike", $scope.query.search], ["name", "ilike", $scope.query.search]];
+        OdooService.searchData('sale.order', $scope.query.page, $scope.query.limit, $scope.query.order, search).then(function(response){
+            $scope.orders = response;
+            $scope.canBeMet($scope.orders.data);
+        });
+    }    
+    
+    $scope.closeSearch = function(){
+        $scope.query.page = 1;
+        OdooService.getAllData('sale.order', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){            
+            $scope.orders = response;
+            $scope.canBeMet($scope.orders.data);
+        });
+    }    
+  
   
   $scope.onPageChange = function(page, limit) {
     $scope.query.page = page;
     $scope.query.limit = limit;
     var deferred = $q.defer();
-    OdooService.getAllData('sale.order', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){
-        $scope.orders  = response;
-        $scope.canBeMet($scope.orders.data);
-        deferred.resolve(response);
-    });
+    if ($scope.query.search.length > 0){
+        var search = ["|", ["client_order_ref", "ilike", $scope.query.search], ["name", "ilike", $scope.query.search]];
+        OdooService.searchData('sale.order', $scope.query.page, $scope.query.limit, $scope.query.order, search).then(function(response){
+            $scope.orders = response;
+            $scope.canBeMet($scope.orders.data);
+            deferred.resolve(response);
+        });        
+    }
+    else{
+        OdooService.getAllData('sale.order', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){
+            $scope.orders = response;
+            $scope.canBeMet($scope.orders.data);
+            deferred.resolve(response);
+        });
+    }        
     
     return deferred.promise;
   };
   
   $scope.onOrderChange = function(order) {
     var deferred = $q.defer();
-    OdooService.getAllData('sale.order', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){
-        $scope.orders = response;
-        $scope.canBeMet($scope.orders.data);
-        $scope.query.order = order;
-        deferred.resolve(response);
-    });
+    if ($scope.query.search.length > 0){
+        var search = ["|", ["client_order_ref", "ilike", $scope.query.search], ["name", "ilike", $scope.query.search]];
+        OdooService.searchData('sale.order', $scope.query.page, $scope.query.limit, $scope.query.order, search).then(function(response){
+            $scope.orders = response;
+            $scope.canBeMet($scope.orders.data);
+            $scope.query.order = order;
+            deferred.resolve(response);
+        });        
+    }
+    else{
+        OdooService.getAllData('sale.order', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){
+            $scope.orders = response;
+            $scope.canBeMet($scope.orders.data);
+            $scope.query.order = order;
+            deferred.resolve(response);
+        });
+    }     
     
     return deferred.promise;
   };  
@@ -746,7 +916,7 @@ app.controller('OrdersController', function($scope, $rootScope, $q, $timeout, $m
     return ['draft', 'cancel', 'sent', 'progress', 'manual', 'done'];
   };
   
-  $scope.changeStatus = function(order){
+  $scope.doChangeStatus = function(order){
         var map = {draft:"draft", cancel: "cancel", progress:"progress", manual:"button_confirm", sent:"sent", done:"done"};
         console.log(map[order.state]);
         if (order.state === "progress"){
@@ -755,11 +925,57 @@ app.controller('OrdersController', function($scope, $rootScope, $q, $timeout, $m
             });
         }
         else{
-            OdooService.changeState('sale.order', map[order.state], [order.id]);
+            OdooService.changeState('sale.order', map[order.state], [order.id]).then(function(){
+                if (map[order.state] === "button_confirm"){
+                    OdooService.getAllData('stock.move',1,5,'-id').then(function(data){ //confirm stock change
+                         console.log(data);
+                         var stock = data.data.filter(function(data){
+                             return data.location_dest_id[1] === 'Partner Locations/Customers';
+                         });
+                         if (stock.length > 0){
+
+                             var stockItem = stock[0];
+                             console.log(stockItem);
+                             OdooService.changeState('stock.move', "done", [stockItem.id]).then(function(data){
+                                 console.log(data);
+                             });
+                         } 
+                     })
+                }                
+            });
+            $scope.$parent.showToast('Status changed!');
+
         }
         
 
         
+  }
+  
+  $scope.changeStatus = function(ev, order, oldStatus){
+        var confirm = $mdDialog.confirm()
+                .title('Are you sure you want to change this status?')
+                .content('This is irreversable, so be sure you want to do this!')
+                .ariaLabel('Confirm status')
+                .targetEvent(ev)
+                .ok('Yes')
+                .cancel('No');      
+        $mdDialog.show(confirm).then(function() {
+          $scope.doChangeStatus(order);
+        }, function() {
+            if ($scope.query.search.length > 0){
+                var search = ["|", ["client_order_ref", "ilike", $scope.query.search], ["name", "ilike", $scope.query.search]];
+                OdooService.searchData('sale.order', $scope.query.page, $scope.query.limit, $scope.query.order, search).then(function(response){
+                    $scope.orders = response;
+                    $scope.canBeMet($scope.orders.data);
+                });        
+            }
+            else{
+                OdooService.getAllData('sale.order', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){
+                    $scope.orders = response;
+                    $scope.canBeMet($scope.orders.data);
+                });
+            }
+        });
   }  
   
   $scope.sendInvoice = function(order){

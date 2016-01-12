@@ -46,9 +46,9 @@ app.service('OdooService', function ($http, $q, $state, WEB_API_URL, localStorag
     }    
     
     
-    this.register = function(username, password, passwordconfirm, type, email){
+    this.register = function(username, password, passwordconfirm, type, email, productid){
         var deferred = $q.defer();
-        $http.post(WEB_API_URL, {register:true, username:username, password:password, passwordconfirm:passwordconfirm, type:type, email:email}).  
+        $http.post(WEB_API_URL, {register:true, username:username, password:password, passwordconfirm:passwordconfirm, type:type, email:email, productid:productid}).  
         then(function(response) {
             console.log(response);
             if (response.data.result === true){
@@ -88,13 +88,14 @@ app.service('OdooService', function ($http, $q, $state, WEB_API_URL, localStorag
     this.updateUser = function(user){
         var deferred = $q.defer();
         console.log(user);
-        $http.post(WEB_API_URL, {updateuser:true, userid: user.local_userid, partnerid: user.partnerid, currentpassword: user.currentPassword, password:user.password, passwordconfirm:user.passwordconfirm, type:user.type, email:user.email, sessionid:user.session_id}).  
+        $http.post(WEB_API_URL, {updateuser:true, userid: user.local_userid, partnerid: user.partnerid, currentpassword: user.currentPassword, password:user.password, passwordconfirm:user.passwordconfirm, type:user.type, email:user.email, productid:user.productid, sessionid:user.session_id}).  
         then(function(response) {
             console.log(response);
             if (response.data.result === true){
                 var userUpdated = localStorageService.get('user');
                 userUpdated.user.type = user.type;
                 userUpdated.partner.email = user.email;
+                userUpdated.user.productid = user.productid;
                 localStorageService.set('user',userUpdated);
                 deferred.resolve(response.data);
             }
@@ -107,6 +108,38 @@ app.service('OdooService', function ($http, $q, $state, WEB_API_URL, localStorag
     
     this.getUser = function(){
         return localStorageService.get('user');
+    }
+    
+    this.getSpecials = function(){
+        var user = localStorageService.get('user');
+        var deferred = $q.defer();
+        $http.post(WEB_API_URL + "?specials=true&sessionid=" + user.user.session_id).  
+        then(function(response) {
+            console.log(response);
+            if (response.data.result === true){
+                deferred.resolve(response.data);
+            }
+            else{deferred.reject(response);}
+            }, function(response) {
+                deferred.reject(response);
+            });
+        return deferred.promise;           
+    }
+    
+    this.updateSpecial = function(id, productid, colour){
+        var user = localStorageService.get('user');
+        var deferred = $q.defer();
+        $http.post(WEB_API_URL, {special:true, id: id, productid: productid, colour: colour, sessionid:user.session_id}).  
+        then(function(response) {
+            console.log(response);
+            if (response.data.result === true){
+                deferred.resolve(response.data);
+            }
+            else{deferred.reject(response);}
+            }, function(response) {
+                deferred.reject(response);
+            });
+        return deferred.promise;          
     }
     
     this.getAllData = function(type, page, limit, order){
@@ -157,9 +190,45 @@ app.service('OdooService', function ($http, $q, $state, WEB_API_URL, localStorag
     };  
     
     
-    this.searchData = function(type, page, field, search, limit, order){
+    this.searchData = function(type, page, limit, order, search){
+        var offset = page*limit - limit;
         var deferred = $q.defer();
-        deferred.resolve();
+        var user = localStorageService.get('user');
+        var OdooService = this;
+        console.log(order);
+        var orderArray = order.split("-");
+        order = orderArray.length > 1 ? order = orderArray[1] + " DESC" : order = orderArray[0] + " ASC";
+
+        var data = {records:true,search:true, searchdata:search, model:type, args:search, limit: limit, offset: offset, order:order, sessionid:user.user.session_id}
+        
+        if (type === "stock.move" && (user.user.type === "picker" || user.user.type === "grower")){
+                data['partnerid'] = user.user.partnerid;
+        }
+        else if (type === "sale.order" && (user.user.type === "buyer")){
+                data['partnerid'] = user.user.partnerid;
+        }
+
+        $http.post(WEB_API_URL, data).  
+        then(function(response) {
+            console.log(response);
+            if (response.data.result === true){
+                //deferred.resolve({"count":testData.count,"data":testData.data.slice(page*limit - limit,page*limit)});
+                if (response.data.data.count === null){
+                    OdooService.logout();
+                    $state.go("login");
+                    deferred.reject(response);                    
+                }
+                deferred.resolve(response.data.data);
+            }
+            else{
+                if (response.data.data.error.message === "Odoo Session Expired");
+                    OdooService.logout();
+                    $state.go("login");
+                    deferred.reject(response);  
+            }
+            }, function(response) {
+                deferred.reject(response);
+            });
         return deferred.promise;             
     };   
     
