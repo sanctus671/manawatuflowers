@@ -57,7 +57,14 @@ app.config(function($stateProvider, $urlRouterProvider, $locationProvider, $http
       templateUrl: "app/partials/portal/account.html",
       controller: "AccountController",
       authenticate:true      
-    })      
+    })
+    .state('portal.specials', {
+      url: "/register",
+      templateUrl: "app/partials/portal/specials.html",
+      controller: "SpecialsController",
+      authenticate:true
+
+    })    
     .state('login', {
       url: "/login",
       templateUrl: "app/partials/auth/login.html",
@@ -71,6 +78,7 @@ app.config(function($stateProvider, $urlRouterProvider, $locationProvider, $http
       authenticate:true
 
     })
+    
     .state('forgotpassword', {
       url: "/forgot-password",
       templateUrl: "app/partials/auth/forgot-password.html",

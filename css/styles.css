@@ -157,6 +157,12 @@ md-grid-list img{
 md-grid-list h1{
     padding-top: 0px;
     margin-top: 0px;
+        margin-bottom: 0px;
+}
+md-grid-list h2{
+    padding-top: 0px;
+    margin-top: 0px;
+        margin-bottom: 40px;
 }
 
 /*STOCK PAGE********************************************************************/

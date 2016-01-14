@@ -19,12 +19,13 @@
         </md-grid-tile>
         
         
-        <md-grid-tile class="green products" ng-class="{'force-top':$index === 4 }" ng-repeat="special in specials" md-rowspan="{{special.rows}}" md-colspan="{{special.cols}}" md-colspan-sm="{{special.smcols}}">
+        <md-grid-tile class="green products {{special.colour}}" ng-class="{'force-top':$index === 4 }" ng-repeat="special in specials" md-rowspan="{{special.rows}}" md-colspan="{{special.cols}}" md-colspan-sm="{{special.smcols}}">
             <a ui-sref="portal.orders">
-                <img ng-if="special.image" ng-src="data:image/jpg;base64,{{special.image}}"/>
-                <h1>{{special.qty_available}}</h1>      
+                <img ng-if="special.product.image" ng-src="data:image/jpg;base64,{{special.product.image}}"/>
+                <h1>{{special.product.qty_available}} left</h1>   
+                <h2>{{special.product.lst_price | currency}} each</h2> 
                 <md-grid-tile-footer>
-                  <h3>{{special.name}}</h3>
+                  <h3>ON SALE: {{special.product.name}}</h3>
                 </md-grid-tile-footer>
             </a>
         </md-grid-tile>        

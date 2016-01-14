@@ -135,7 +135,71 @@ app.controller('ForgotPasswordController', function ($scope, $state,$mdToast, $r
 
     
     
-    });  
+    }); 
+    
+    
+app.controller('SpecialsController', function ($scope, $rootScope,$state,$mdToast,OdooService) {
+    var init = function init(){
+        $scope.user = {};
+        $scope.latest = [];
+        $scope.products = [];
+        $scope.productNames = [];
+        $scope.productsMap = {};
+        $scope.productNameMap = {};
+        $scope.itemType = "Orders";
+        $scope.specials = [];
+    }
+ 
+    $scope.userData = $rootScope.currentUser;
+    $scope.user = $scope.userData.user;
+    $scope.partner = $scope.userData.partner;
+
+    OdooService.getAllData('product.template', 1, 9999, '-id').then(function(response){
+
+        $scope.products = response.data;  
+        for (var index in response.data){
+            var product = response.data[index];
+            $scope.productsMap[product.id] = product;
+            $scope.productNames.push(product.name);
+            $scope.productNameMap[product.name] = product.id;
+        }         
+        OdooService.getSpecials().then(function(response){
+            $scope.specials = response.data;
+            for (var index in $scope.specials){
+
+                if (index == 2){$scope.specials[index]["rows"] = 3;$scope.specials[index]["smcols"] = 1;}
+                else if (index == 3){$scope.specials[index]["rows"] = 2;$scope.specials[index]["cols"] = 2; $scope.specials[index]["smcols"] = 1;}
+                else if (index == 4){$scope.specials[index]["rows"] = 3;$scope.specials[index]["smcols"] = 1;}
+                $scope.specials[index]["product"] = $scope.productsMap[$scope.specials[index].productid];
+            }
+        
+        });        
+
+
+    
+    });      
+    
+    $scope.convertDate = function(date){
+        if (!date)return "";
+        return new Date(date);
+    };    
+    //get latest orders/stock
+    //get summary of key products
+    
+    $scope.updateSpecial = function(special){
+        special.productid = $scope.productNameMap[special.product.name] ? $scope.productNameMap[special.product.name] : special.productid;
+        
+        OdooService.updateSpecial(special.id, special.productid, special.colour).then(function(data){
+            $scope.$parent.showToast('Special Updated!'); 
+        },function(){
+            $scope.$parent.showToast('Failed to update special'); 
+        });
+            
+    }    
+    
+    init();
+    
+    });    
     
 app.controller('HomeController', function($scope,$rootScope, OdooService){
     var init = function init(){
@@ -156,13 +220,14 @@ app.controller('HomeController', function($scope,$rootScope, OdooService){
     
 
     
-    OdooService.getAllData('product.template', 1, 5, '-id').then(function(response){
+    OdooService.getAllData('product.template', 1, 9999, '-id').then(function(response){
         console.log(response);
         $scope.products = response.data;  
         for (var index in response.data){
             var product = response.data[index];
-            $scope.productsMap[product.id +4] = product;
-        }         
+            $scope.productsMap[product.id] = product;
+        }   
+        console.log($scope.productsMap);
         OdooService.getSpecials().then(function(response){
             $scope.specials = response.data;
             for (var index in $scope.specials){
@@ -200,8 +265,7 @@ app.controller('HomeController', function($scope,$rootScope, OdooService){
         if (!date)return "";
         return new Date(date);
     };    
-    //get latest orders/stock
-    //get summary of key products
+
     
     
     

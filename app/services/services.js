@@ -129,7 +129,7 @@ app.service('OdooService', function ($http, $q, $state, WEB_API_URL, localStorag
     this.updateSpecial = function(id, productid, colour){
         var user = localStorageService.get('user');
         var deferred = $q.defer();
-        $http.post(WEB_API_URL, {special:true, id: id, productid: productid, colour: colour, sessionid:user.session_id}).  
+        $http.post(WEB_API_URL, {updatespecial:true, id: id, productid: productid, colour: colour, sessionid:user.user.session_id}).  
         then(function(response) {
             console.log(response);
             if (response.data.result === true){

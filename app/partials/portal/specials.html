@@ -1,0 +1,34 @@
+<md-data-table-toolbar aria-hidden="false" class="">
+  <h2 class="md-title">Update Specials</h2>
+  <div flex=""></div>
+</md-data-table-toolbar>
+
+
+<md-content flex="100" flex-gt-md="40" flex-gt-lg="25" layout-align="center center" layout-padding>
+
+
+        <form name="registerForm">
+            <div ng-repeat="special in specials">
+                <h1>Special {{$index + 1}}</h1>
+                <md-input-container class="md-icon-float">
+                    <label>Colour</label>
+                    <md-icon md-svg-icon="css/icons/ic_format_color_fill_black_24px.svg"></md-icon>
+                    <input name="colour" required ng-model="special.colour" type="text">                          
+                </md-input-container>   
+                <label>Flower Type:</label>
+                <md-input-container class="autocomplete-container" flex>
+                  <autocomplete ng-model="special.product.name" autocomplete-required="true" data="productNames" attr-input-class="md-input" attr-placeholder="Flower Type" ></autocomplete>
+                </md-input-container>    
+                <md-button class="md-raised md-accent" ng-click="updateSpecial(special)">Update Special</md-button>
+            </div>
+            
+
+            
+
+        </form>
+        <md-progress-circular class="login-load" md-mode="{{loading}}" md-diameter="20px"></md-progress-circular>
+        <div class="error">{{error}}</div>        
+
+
+
+  </md-content>
