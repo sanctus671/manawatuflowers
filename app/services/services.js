@@ -110,6 +110,38 @@ app.service('OdooService', function ($http, $q, $state, WEB_API_URL, localStorag
         return localStorageService.get('user');
     }
     
+    this.getProductRanges = function(){
+        var user = localStorageService.get('user');
+        var deferred = $q.defer();
+        $http.post(WEB_API_URL + "?productranges=true&sessionid=" + user.user.session_id).  
+        then(function(response) {
+            console.log(response);
+            if (response.data.result === true){
+                deferred.resolve(response.data);
+            }
+            else{deferred.reject(response);}
+            }, function(response) {
+                deferred.reject(response);
+            });
+        return deferred.promise;           
+    }  
+    this.updateProductRanges = function(limited,good){
+        var user = localStorageService.get('user');
+        var deferred = $q.defer();
+        $http.post(WEB_API_URL, {updateproductranges:true, limited:limited, good:good, sessionid:user.user.session_id}).  
+        then(function(response) {
+            console.log(response);
+            if (response.data.result === true){
+                deferred.resolve(response.data);
+            }
+            else{deferred.reject(response);}
+            }, function(response) {
+                deferred.reject(response);
+            });
+        return deferred.promise;          
+    }    
+    
+    
     this.getSpecials = function(){
         var user = localStorageService.get('user');
         var deferred = $q.defer();

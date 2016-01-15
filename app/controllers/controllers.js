@@ -651,15 +651,24 @@ app.controller('ProductsController', function($scope, $rootScope, $q, $timeout, 
           search:''
         };  
         $scope.products = [];
+        $scope.productRanges = {
+            limited:5,
+            good:20
+        }
     };	
     init();    
     
   $scope.userData = $rootScope.currentUser;
   $scope.user = $scope.userData.user;
+  console.log($scope.user.type);
   OdooService.getAllData('product.template', $scope.query.page, $scope.query.limit, $scope.query.order).then(function(response){
-      console.log(response);
+        console.log(response);
         $scope.products = response;
-        
+    OdooService.getProductRanges().then(function(response){
+        $scope.productRanges = response.data[0];
+
+
+    });        
 
   });
 
@@ -720,6 +729,33 @@ app.controller('ProductsController', function($scope, $rootScope, $q, $timeout, 
     
     return deferred.promise;
   };  
+  
+  $scope.updateProductRanges = function(event){
+    $mdDialog.show({
+          controller: function ($scope, $mdDialog, $timeout, Upload, WEB_API_URL, ranges, OdooService) {
+              console.log("here");
+            $scope.cancel = function() {
+              $mdDialog.cancel();
+            };    
+            $scope.update = function() {
+                $mdDialog.hide({limited:ranges.limited, good:ranges.good});
+            };                
+          },
+          templateUrl: 'app/partials/dialog/update-ranges.html',
+          parent: angular.element(document.body),
+          targetEvent: event,
+          clickOutsideToClose:true,
+          locals:{ranges:$scope.productRanges}
+        }).then(function(ranges){
+            OdooService.updateProductRanges(ranges.limited, ranges.good).then(function(){
+                $scope.$parent.showToast('Product ranges updated!');               
+                
+            },function(){
+                $scope.$parent.showToast('Failed to update ranges');       
+            });
+        });
+  };  
+  
   
   $scope.addItem = function(event){
     $mdDialog.show({

@@ -1,6 +1,12 @@
 <md-data-table-toolbar ng-hide="selected.length || filter.show" aria-hidden="false" class="">
   <h2 class="md-title">Products</h2>
   <div flex=""></div>
+    <md-button class="" ng-click="updateProductRanges()" ng-show="user.type === 'admin'">
+        <md-icon md-svg-icon="css/icons/ic_compare_arrows_black_24px.svg"></md-icon> Product Ranges
+        <md-tooltip>
+            Update Product Ranges
+        </md-tooltip>                  
+    </md-button>    
     <md-button class="md-fab md-primary md-mini" ng-click="filter.show = true" ng-disabled="products.length < 1">
         <md-icon md-svg-icon="css/icons/ic_filter_list_white_24px.svg"></md-icon> 
         <md-tooltip>
@@ -30,6 +36,7 @@
         <md-data-table-toolbar class="alternate" ng-show="selected.length">
             <div>{{selected.length}} {{selected.length > 1 ? 'items' : 'item'}} selected</div>
             <div flex=""></div>  
+             
             <md-button class="" ng-click="editItem($event)" ng-show="user.type === 'admin'" ng-disabled="products.length < 1">
                 <md-icon md-svg-icon="css/icons/ic_mode_edit_black_24px.svg"></md-icon> Edit
                 <md-tooltip>
@@ -53,11 +60,11 @@
                 <th order-by="id" name="ID"></th>
                 <th order-by="name" name="Name"></th>
                 <th order-by="image_small" name="Image"></th>
-                <th order-by="list_price" name="Price"></th>
+                <th order-by="list_price" name="Price"  ng-if="user.type === 'admin'"></th>
                 <th order-by="qty_available" name="Quantity Available"></th>
-                <th order-by="incoming_qty" name="Quantity Forecasted"></th>
-                <th order-by="outgoing_qty" name="Quantity Outgoing"></th>
-                <th order-by="virtual_available" name="Total Quantity"></th>
+                <th order-by="incoming_qty" name="Quantity Forecasted" ng-if="user.type === 'admin'"></th>
+                <th order-by="outgoing_qty" name="Quantity Outgoing" ng-if="user.type === 'admin'"></th>
+                <th order-by="virtual_available" name="Total Quantity" ng-if="user.type === 'admin'"></th>
 
               </tr>
             </thead>
@@ -66,11 +73,12 @@
                 <td>{{product.id | no_false}}</td>
                 <td>{{product.name | no_false}}</td>
                 <td><img class="stock-thumbnail" ng-if="product.image_small" ng-src="data:image/jpg;base64,{{product.image_small | no_false}}"></td>
-                <td>{{product.list_price | currency}}</td>
-                <td>{{product.qty_available | false_zero}}</td>
-                <td>{{product.incoming_qty | false_zero}}</td>
-                <td>{{product.outgoing_qty | false_zero}}</td>
-                <td>{{product.virtual_available | false_zero}}</td>
+                <td ng-if="user.type === 'admin'">{{product.list_price | currency}}</td>
+                <td ng-if="user.type === 'admin'">{{product.qty_available | false_zero}}</td>
+                <td ng-if="user.type !== 'admin'"><span ng-if="!product.qty_available || product.qty_available < 1">None</span><span ng-if="product.qty_available > 0 && product.qty_available < productRanges.limited">Limited</span><span ng-if="product.qty_available >= productRanges.limited && product.qty_available <= productRanges.good">Reasonable</span><span ng-if="product.qty_available > productRanges.good">Good</span></td>
+                <td ng-if="user.type === 'admin'">{{product.incoming_qty | false_zero}}</td>
+                <td ng-if="user.type === 'admin'">{{product.outgoing_qty | false_zero}}</td>
+                <td ng-if="user.type === 'admin'">{{product.virtual_available | false_zero}}</td>
               </tr>
             </tbody>
           </table>
